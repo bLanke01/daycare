@@ -3847,3 +3847,351 @@ a {
     justify-content: center;
   }
 }
+
+/* Add this to your globals.css or create a new CSS file for attendance */
+
+.attendance-container {
+  padding: 2rem;
+  background-color: #f8f9fa;
+  min-height: 100vh;
+}
+
+.page-title {
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: #333;
+  margin-bottom: 2rem;
+}
+
+/* Filter Controls */
+.filter-controls {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 2rem;
+  align-items: flex-end;
+  flex-wrap: wrap;
+}
+
+.filter-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.filter-group label {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #555;
+}
+
+.filter-select {
+  padding: 0.5rem 0.75rem;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  background-color: white;
+  font-size: 0.875rem;
+  min-width: 120px;
+}
+
+.filter-select:focus {
+  outline: none;
+  border-color: #FF5533;
+  box-shadow: 0 0 0 2px rgba(255, 85, 51, 0.1);
+}
+
+.generate-btn {
+  background-color: #FF5533;
+  color: white;
+  border: none;
+  padding: 0.5rem 1rem;
+  border-radius: 4px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.generate-btn:hover {
+  background-color: #e64a29;
+}
+
+/* Attendance Sheet */
+.attendance-sheet {
+  background-color: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+  margin-bottom: 2rem;
+}
+
+.sheet-title {
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: #333;
+  padding: 1.5rem 1.5rem 0;
+  margin-bottom: 1rem;
+}
+
+.sheet-table {
+  overflow-x: auto;
+}
+
+.sheet-table table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.sheet-table th {
+  background-color: #f8f9fa;
+  padding: 1rem;
+  text-align: left;
+  font-weight: 600;
+  color: #555;
+  border-bottom: 1px solid #dee2e6;
+  font-size: 0.875rem;
+}
+
+.sheet-table td {
+  padding: 1rem;
+  border-bottom: 1px solid #f0f0f0;
+  vertical-align: middle;
+}
+
+/* Column widths */
+.checkbox-col {
+  width: 40px;
+  text-align: center;
+}
+
+.number-col {
+  width: 60px;
+  text-align: center;
+}
+
+.name-col {
+  min-width: 200px;
+}
+
+.id-col {
+  width: 120px;
+  color: #666;
+  font-family: monospace;
+}
+
+.age-col {
+  width: 100px;
+  color: #666;
+}
+
+.status-col {
+  width: 300px;
+}
+
+/* Child name with avatar */
+.child-name-container {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.child-avatar {
+  font-size: 1.5rem;
+}
+
+/* Status buttons */
+.status-buttons {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.status-btn {
+  padding: 0.375rem 0.75rem;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  background-color: white;
+  color: #666;
+  font-size: 0.8rem;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-weight: 500;
+  min-width: 70px;
+}
+
+.status-btn:hover {
+  border-color: #ccc;
+  background-color: #f8f9fa;
+}
+
+.status-btn.present {
+  border-color: #28a745;
+  color: #28a745;
+}
+
+.status-btn.present.active {
+  background-color: #28a745;
+  color: white;
+}
+
+.status-btn.late {
+  border-color: #ffc107;
+  color: #ffc107;
+}
+
+.status-btn.late.active {
+  background-color: #ffc107;
+  color: white;
+}
+
+.status-btn.absent {
+  border-color: #dc3545;
+  color: #dc3545;
+}
+
+.status-btn.absent.active {
+  background-color: #dc3545;
+  color: white;
+}
+
+.status-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* Attendance row hover effect */
+.attendance-row:hover {
+  background-color: #f8f9fa;
+}
+
+/* Sheet footer */
+.sheet-footer {
+  padding: 1.5rem;
+  border-top: 1px solid #dee2e6;
+  background-color: #f8f9fa;
+}
+
+.submit-btn {
+  background-color: #FF5533;
+  color: white;
+  border: none;
+  padding: 0.75rem 2rem;
+  border-radius: 4px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.submit-btn:hover:not(:disabled) {
+  background-color: #e64a29;
+}
+
+.submit-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* Summary Stats */
+.attendance-summary {
+  background-color: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  padding: 1.5rem;
+}
+
+.summary-stats {
+  display: flex;
+  gap: 2rem;
+  flex-wrap: wrap;
+}
+
+.stat-item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.stat-label {
+  font-size: 0.875rem;
+  color: #666;
+  font-weight: 500;
+}
+
+.stat-value {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #333;
+}
+
+.stat-item.present .stat-value {
+  color: #28a745;
+}
+
+.stat-item.late .stat-value {
+  color: #ffc107;
+}
+
+.stat-item.absent .stat-value {
+  color: #dc3545;
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+  .attendance-container {
+    padding: 1rem;
+  }
+  
+  .filter-controls {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  
+  .filter-group {
+    width: 100%;
+  }
+  
+  .filter-select {
+    width: 100%;
+  }
+  
+  .status-buttons {
+    flex-direction: column;
+    gap: 0.25rem;
+  }
+  
+  .status-btn {
+    width: 100%;
+  }
+  
+  .summary-stats {
+    justify-content: space-between;
+  }
+  
+  .stat-item {
+    flex: 1;
+    text-align: center;
+  }
+}
+
+/* Loading state */
+.loading {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 50vh;
+  font-size: 1.1rem;
+  color: #666;
+}
+
+/* Checkbox styling */
+input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+  cursor: pointer;
+}
+
+/* Smooth transitions */
+.status-btn, .submit-btn, .generate-btn {
+  transition: all 0.2s ease;
+}
+
+.attendance-row {
+  transition: background-color 0.1s ease;
+}
