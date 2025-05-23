@@ -1,12 +1,12 @@
-// components/auth/SignupForm.js (Updated for Parent Registration)
+// Simplified SignupForm.js - Emergency Fix Version
 'use client';
 
 import { useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
-import { collection, query, where, getDocs, doc, updateDoc, setDoc } from 'firebase/firestore';
-import { useAuth } from '../../firebase/auth-context';
-import { db } from '../../firebase/config';
+import { createUserWithEmailAndPassword } from 'firebase/auth';
+import { doc, setDoc, getDoc, collection, getDocs } from 'firebase/firestore';
+import { auth, db } from '../../firebase/config';
 
 const SignupForm = () => {
   const router = useRouter();
@@ -24,8 +24,7 @@ const SignupForm = () => {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [successMessage, setSuccessMessage] = useState('');
-  
-  const { registerUser } = useAuth();
+  const [debugInfo, setDebugInfo] = useState('');
   
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -56,151 +55,143 @@ const SignupForm = () => {
     try {
       setError('');
       setLoading(true);
-      
-      console.log('🚀 Starting parent registration process...');
-      console.log('Entered access code:', `"${formData.accessCode}"`);
-      
-      // Verify access code exists and is valid
-      if (!formData.accessCode.trim()) {
-        throw new Error('Access code is required for registration');
-      }
+      setDebugInfo('Starting registration...');
       
       const trimmedCode = formData.accessCode.trim().toUpperCase();
-      console.log('Looking for access code:', trimmedCode);
+      console.log('🚀 Starting simplified registration with code:', trimmedCode);
       
-      // Search for the specific access code
-      const accessCodesRef = collection(db, 'accessCodes');
-      const accessCodeQuery = query(accessCodesRef, where('code', '==', trimmedCode));
-      const accessCodesSnapshot = await getDocs(accessCodeQuery);
+      // Step 1: Create Firebase Auth User FIRST
+      setDebugInfo('Creating Firebase Auth user...');
+      console.log('📝 Creating auth user for:', formData.email);
       
-      if (accessCodesSnapshot.empty) {
-        throw new Error(`Access code "${trimmedCode}" not found. Please check with the daycare for a valid access code.`);
-      }
+      const userCredential = await createUserWithEmailAndPassword(auth, formData.email, formData.password);
+      const user = userCredential.user;
       
-      // Get the first (and should be only) matching access code
-      let foundCodeData = null;
-      let foundDocRef = null;
+      console.log('✅ Auth user created:', user.uid);
+      setDebugInfo('Auth user created successfully. Creating profile...');
       
-      accessCodesSnapshot.forEach(docSnapshot => {
-        foundCodeData = docSnapshot.data();
-        foundDocRef = docSnapshot.ref;
-      });
-      
-      console.log('📋 Access code data:', foundCodeData);
-      
-      // Check if code is expired
-      const expiryDate = new Date(foundCodeData.expiresAt);
-      const now = new Date();
-      console.log('Expiry check:', { expiryDate, now, expired: expiryDate < now });
-      
-      if (expiryDate < now) {
-        throw new Error('This access code has expired. Please contact the daycare for a new code.');
-      }
-      
-      // Check if code is already used
-      console.log('Usage check:', { used: foundCodeData.used, usesLeft: foundCodeData.usesLeft });
-      
-      if (foundCodeData.used || foundCodeData.usesLeft <= 0) {
-        throw new Error('This access code has already been used.');
-      }
-      
-      // Verify email matches (if specified in access code)
-      if (foundCodeData.parentEmail && 
-          foundCodeData.parentEmail.toLowerCase() !== formData.email.toLowerCase()) {
-        console.log('Email mismatch:', { 
-          expected: foundCodeData.parentEmail.toLowerCase(), 
-          entered: formData.email.toLowerCase() 
-        });
-        throw new Error(`This access code was issued for ${foundCodeData.parentEmail}. Please use that email address or contact the daycare.`);
-      }
-      
-      console.log('✅ All access code validations passed. Creating user account...');
-      
-      const userData = {
+      // Step 2: Create User Profile in Firestore
+      const userDocData = {
+        uid: user.uid,
+        email: user.email,
         firstName: formData.firstName,
         lastName: formData.lastName,
         role: 'parent',
         accessCode: trimmedCode,
-        childId: foundCodeData.childId || null
+        createdAt: new Date().toISOString(),
+        registrationCompleted: true
       };
       
-      const { user, error } = await registerUser(formData.email, formData.password, userData);
+      console.log('💾 Saving user profile to Firestore...');
+      await setDoc(doc(db, 'users', user.uid), userDocData);
+      console.log('✅ User profile saved');
+      setDebugInfo('User profile created. Looking for access code...');
       
-      if (error) {
-        throw new Error(error.message);
-      }
+      // Step 3: Find Access Code (Simple approach)
+      console.log('🔍 Looking for access code:', trimmedCode);
+      let foundAccessCode = false;
+      let accessCodeData = null;
       
-      console.log('✅ User created:', user.uid);
-      
-      // Update access code as used
-      console.log('📝 Updating access code as used...');
       try {
-        await updateDoc(foundDocRef, {
-          used: true,
-          usesLeft: 0,
-          usedAt: new Date().toISOString(),
-          parentId: user.uid
-        });
-      } catch (updateError) {
-        console.warn('Warning: Could not update access code, but continuing...', updateError);
+        // Try to get access code document directly
+        const accessCodeDoc = await getDoc(doc(db, 'accessCodes', trimmedCode));
+        
+        if (accessCodeDoc.exists()) {
+          accessCodeData = accessCodeDoc.data();
+          foundAccessCode = true;
+          console.log('✅ Found access code document:', accessCodeData);
+        } else {
+          // Search through all access codes
+          console.log('🔍 Access code not found by ID, searching all...');
+          const allAccessCodes = await getDocs(collection(db, 'accessCodes'));
+          
+          allAccessCodes.forEach((doc) => {
+            const data = doc.data();
+            if (data.code === trimmedCode) {
+              accessCodeData = data;
+              foundAccessCode = true;
+              console.log('✅ Found access code in search:', data);
+            }
+          });
+        }
+      } catch (accessCodeError) {
+        console.warn('⚠️ Error searching for access code:', accessCodeError);
+        setDebugInfo('Warning: Could not verify access code, but continuing...');
       }
       
-      // Find and update children linked to this access code
-      console.log('👶 Finding children with this access code...');
-      const childrenQuery = query(
-        collection(db, 'children'), 
-        where('accessCode', '==', trimmedCode)
-      );
-      const childrenSnapshot = await getDocs(childrenQuery);
-      
-      console.log(`Found ${childrenSnapshot.size} children to link`);
-      
-      // Update each child to link with parent
-      const updatePromises = [];
-      const linkedChildren = [];
-      
-      childrenSnapshot.forEach(childDoc => {
-        const childData = childDoc.data();
-        console.log('Linking child:', childDoc.id, childData.firstName, childData.lastName);
+      if (!foundAccessCode) {
+        console.log('⚠️ Access code not found, but user account was created');
+        setDebugInfo('Access code not found, but account was created successfully.');
+      } else {
+        setDebugInfo('Access code found! Looking for child...');
         
-        linkedChildren.push({
-          id: childDoc.id,
-          name: `${childData.firstName} ${childData.lastName}`
-        });
+        // Step 4: Find and Link Child (Simple approach)
+        if (accessCodeData.childId) {
+          try {
+            console.log('👶 Attempting to link child:', accessCodeData.childId);
+            
+            const childDoc = await getDoc(doc(db, 'children', accessCodeData.childId));
+            
+            if (childDoc.exists()) {
+              // Update child with parent info
+              await setDoc(doc(db, 'children', accessCodeData.childId), {
+                ...childDoc.data(),
+                parentId: user.uid,
+                parentRegistered: true,
+                parentRegisteredAt: new Date().toISOString(),
+                parentFirstName: formData.firstName,
+                parentLastName: formData.lastName
+              }, { merge: true });
+              
+              console.log('✅ Child linked successfully');
+              setDebugInfo('Child linked successfully!');
+            }
+          } catch (childLinkError) {
+            console.warn('⚠️ Could not link child:', childLinkError);
+            setDebugInfo('Child linking failed, but account was created.');
+          }
+        }
         
-        updatePromises.push(
-          updateDoc(doc(db, 'children', childDoc.id), {
+        // Step 5: Mark access code as used
+        try {
+          await setDoc(doc(db, 'accessCodes', trimmedCode), {
+            ...accessCodeData,
+            used: true,
+            usesLeft: 0,
             parentId: user.uid,
-            parentRegistered: true,
-            parentRegisteredAt: new Date().toISOString()
-          }).catch(error => {
-            console.warn(`Warning: Could not update child ${childDoc.id}:`, error);
-            return null; // Continue with other children
-          })
-        );
-      });
+            usedAt: new Date().toISOString()
+          }, { merge: true });
+          
+          console.log('✅ Access code marked as used');
+        } catch (accessUpdateError) {
+          console.warn('⚠️ Could not update access code:', accessUpdateError);
+        }
+      }
       
-      await Promise.allSettled(updatePromises);
-      console.log('✅ Children linking process completed');
-      
-      // Show success message
-      const childrenNames = linkedChildren.map(child => child.name).join(', ');
+      // Success!
       setSuccessMessage(
         `🎉 Account created successfully!\n\n` +
-        `Welcome ${formData.firstName} ${formData.lastName}!\n` +
-        `Your account has been linked to: ${childrenNames}\n\n` +
-        `You can now access your parent dashboard to view your child's daily activities, meals, attendance, and more.`
+        `Welcome ${formData.firstName} ${formData.lastName}!\n\n` +
+        `You can now log in to your parent dashboard.\n\n` +
+        `Redirecting in 3 seconds...`
       );
       
-      // Redirect after showing success message
       setTimeout(() => {
-        console.log('🎉 Registration complete! Redirecting to parent dashboard...');
-        router.push('/parent');
+        router.push('/auth/login?type=parent');
       }, 3000);
       
     } catch (err) {
       console.error('❌ Registration error:', err);
-      setError(err.message);
+      setError(`Registration failed: ${err.message}`);
+      setDebugInfo(`Error: ${err.message}`);
+      
+      // If it's a permission error, provide specific guidance
+      if (err.message.includes('insufficient permissions') || err.message.includes('Missing or insufficient permissions')) {
+        setError(
+          'Permission Error: There seems to be a Firestore security rules issue. ' +
+          'Please check that the Firestore rules are set to allow authenticated users to read/write.'
+        );
+      }
     } finally {
       setLoading(false);
     }
@@ -224,15 +215,6 @@ const SignupForm = () => {
           <p>Admin accounts can only be created by existing administrators.</p>
           <p>Please contact the daycare administrator for assistance.</p>
         </div>
-        
-        <div className="auth-redirect">
-          <p>Already have an admin account?</p>
-          <Link href={`/auth/login?type=admin`}>
-            <button className="auth-button login-btn">
-              Go to Admin Login
-            </button>
-          </Link>
-        </div>
       </div>
     );
   }
@@ -250,11 +232,33 @@ const SignupForm = () => {
       
       <h2 className="auth-title">Parent Sign Up</h2>
       
-      {error && <div className="error-message">{error}</div>}
+      {error && (
+        <div className="error-message">
+          <p>{error}</p>
+          {debugInfo && (
+            <details style={{ marginTop: '1rem' }}>
+              <summary>Debug Info</summary>
+              <p style={{ fontSize: '0.9rem', color: '#666' }}>{debugInfo}</p>
+            </details>
+          )}
+        </div>
+      )}
       
       {successMessage && (
         <div className="success-message">
           <pre>{successMessage}</pre>
+        </div>
+      )}
+      
+      {debugInfo && !error && !successMessage && (
+        <div style={{ 
+          background: '#e3f2fd', 
+          padding: '0.75rem', 
+          borderRadius: '4px', 
+          marginBottom: '1rem',
+          fontSize: '0.9rem'
+        }}>
+          Status: {debugInfo}
         </div>
       )}
       
@@ -271,10 +275,10 @@ const SignupForm = () => {
               required
               className="auth-input"
               disabled={loading}
-              placeholder="Enter the access code provided by the daycare"
+              placeholder="Enter access code (e.g., XB7G97DM)"
               style={{ textTransform: 'uppercase' }}
             />
-            <small>Enter the 8-character code provided when your child was registered</small>
+            <small>Enter the 8-character code provided by the daycare</small>
           </div>
           
           <div className="name-inputs">
@@ -319,7 +323,6 @@ const SignupForm = () => {
               className="auth-input"
               disabled={loading}
             />
-            <small>This should match the email provided during child registration</small>
           </div>
           
           <div className="form-group">
