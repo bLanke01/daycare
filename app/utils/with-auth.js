@@ -1,4 +1,4 @@
-// app/utils/with-auth.js (updated)
+// app/utils/with-auth.js (FIXED VERSION)
 'use client';
 
 import { useEffect } from 'react';
@@ -11,15 +11,20 @@ export function withAuth(Component, requiredRole) {
 
     useEffect(() => {
       if (!loading) {
-        // Check if admin setup is complete
-        if (adminSetupComplete === false) {
+        // Check if admin setup is complete ONLY when trying to access admin areas
+        if (requiredRole === 'admin' && adminSetupComplete === false && !user) {
+          // Only redirect to setup if no admin exists AND user is not logged in
           redirect('/admin-setup');
           return;
         }
 
         if (!user) {
-          // Not logged in, redirect to login
-          redirect('/auth');
+          // Not logged in, redirect to login with the appropriate type
+          if (requiredRole === 'admin') {
+            redirect('/auth/login?type=admin');
+          } else {
+            redirect('/auth/login?type=parent');
+          }
         } else if (requiredRole && userRole !== requiredRole) {
           // Wrong role, redirect to appropriate dashboard
           if (userRole === 'admin') {

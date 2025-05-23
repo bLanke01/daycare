@@ -3408,3 +3408,442 @@ a {
 .close-success-btn:hover {
   background-color: #1e7e34;
 }
+
+/* Additional CSS Styles for Parent Registration Flow */
+
+/* Access Code Display Styles */
+.access-code-info {
+  margin-top: 0.5rem;
+  padding: 0.5rem;
+  background-color: #f8f9fa;
+  border-radius: 4px;
+  border: 1px solid #dee2e6;
+}
+
+.access-code {
+  background-color: #e9ecef;
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+  font-family: 'Courier New', monospace;
+  font-weight: bold;
+  letter-spacing: 1px;
+  color: #495057;
+  font-size: 0.9rem;
+  border: 1px solid #ced4da;
+}
+
+/* Resend Code Button */
+.resend-code-btn {
+  background-color: #17a2b8;
+  color: white;
+  border: none;
+  padding: 0.5rem 0.75rem;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 500;
+  font-size: 0.8rem;
+  margin-top: 0.5rem;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.resend-code-btn:hover {
+  background-color: #138496;
+  transform: translateY(-1px);
+}
+
+/* Enhanced Success Message Modal */
+.success-message-modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10000;
+  animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.success-modal-content {
+  background-color: white;
+  padding: 2rem;
+  border-radius: 12px;
+  max-width: 700px;
+  width: 90%;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  max-height: 80vh;
+  overflow-y: auto;
+  animation: slideUp 0.3s ease;
+}
+
+@keyframes slideUp {
+  from { 
+    transform: translateY(30px);
+    opacity: 0;
+  }
+  to { 
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.success-modal-content h3 {
+  color: #28a745;
+  margin-bottom: 1.5rem;
+  text-align: center;
+  font-size: 1.4rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+}
+
+.access-code-display {
+  background: linear-gradient(135deg, #f8f9fa, #e9ecef);
+  border: 2px solid #28a745;
+  border-radius: 8px;
+  padding: 1.5rem;
+  margin: 1rem 0;
+  position: relative;
+}
+
+.access-code-display::before {
+  content: '🔑';
+  position: absolute;
+  top: -10px;
+  left: 20px;
+  background-color: white;
+  padding: 0 0.5rem;
+  font-size: 1.2rem;
+}
+
+.access-code-display pre {
+  font-family: inherit;
+  white-space: pre-wrap;
+  margin: 0;
+  line-height: 1.6;
+  color: #333;
+  font-size: 0.9rem;
+}
+
+.success-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  justify-content: center;
+  margin-top: 1.5rem;
+}
+
+.copy-code-btn,
+.print-btn {
+  background-color: #007bff;
+  color: white;
+  border: none;
+  padding: 0.75rem 1.5rem;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 500;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.copy-code-btn:hover {
+  background-color: #0056b3;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 123, 255, 0.3);
+}
+
+.print-btn {
+  background-color: #6c757d;
+}
+
+.print-btn:hover {
+  background-color: #545b62;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(108, 117, 125, 0.3);
+}
+
+.close-success-btn {
+  background: linear-gradient(135deg, #28a745, #34ce57);
+  color: white;
+  border: none;
+  padding: 0.75rem 2rem;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.close-success-btn:hover {
+  background: linear-gradient(135deg, #1e7e34, #28a745);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(40, 167, 69, 0.3);
+}
+
+/* Enhanced Registration Status */
+.registration-status {
+  font-size: 0.8rem;
+  padding: 0.3rem 0.75rem;
+  border-radius: 20px;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  margin-top: 0.5rem;
+  border: 1px solid;
+}
+
+.registration-status.registered {
+  background: linear-gradient(135deg, #d4edda, #c3e6cb);
+  color: #155724;
+  border-color: #c3e6cb;
+  animation: pulse 2s infinite;
+}
+
+.registration-status.pending {
+  background: linear-gradient(135deg, #fff3cd, #ffeaa7);
+  color: #856404;
+  border-color: #ffeaa7;
+}
+
+@keyframes pulse {
+  0% { box-shadow: 0 0 0 0 rgba(40, 167, 69, 0.4); }
+  70% { box-shadow: 0 0 0 10px rgba(40, 167, 69, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(40, 167, 69, 0); }
+}
+
+/* Enhanced Child Card Actions */
+.card-actions {
+  margin-top: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.view-btn {
+  flex: 1;
+  background: linear-gradient(135deg, var(--primary-color), #ff6b4a);
+  color: white;
+  border: none;
+  padding: 0.75rem;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  text-transform: uppercase;
+  font-size: 0.8rem;
+  letter-spacing: 0.5px;
+}
+
+.view-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(255, 85, 51, 0.3);
+}
+
+/* Enhanced Success Message in Form */
+.success-message {
+  background: linear-gradient(135deg, #d4edda, #c3e6cb);
+  color: #155724;
+  padding: 1.5rem;
+  border-radius: 8px;
+  margin-bottom: 1rem;
+  border: 1px solid #c3e6cb;
+  border-left: 4px solid #28a745;
+  position: relative;
+  box-shadow: 0 2px 4px rgba(40, 167, 69, 0.1);
+  animation: slideDown 0.3s ease;
+}
+
+@keyframes slideDown {
+  from {
+    transform: translateY(-20px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.success-message pre {
+  white-space: pre-wrap;
+  font-family: inherit;
+  margin: 0;
+  line-height: 1.6;
+  font-size: 0.9rem;
+}
+
+/* Enhanced Form Styles for Signup */
+.auth-form-container .auth-input {
+  transition: all 0.2s ease;
+}
+
+.auth-form-container .auth-input:focus {
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 3px rgba(255, 85, 51, 0.1);
+  outline: none;
+}
+
+.auth-form-container .auth-input[style*="text-transform: uppercase"] {
+  font-family: 'Courier New', monospace;
+  font-weight: bold;
+  letter-spacing: 2px;
+}
+
+/* Parent Dashboard Specific Styles */
+.parent-dashboard {
+  padding: 1rem;
+}
+
+.dashboard-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 2rem;
+  padding-bottom: 1rem;
+  border-bottom: 2px solid var(--border-color);
+}
+
+.child-selector {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.child-selector label {
+  font-weight: 500;
+  color: var(--text-color);
+}
+
+.child-selector select {
+  padding: 0.5rem;
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  background-color: white;
+  min-width: 200px;
+}
+
+.child-dashboard {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+
+.profile-section {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 2rem;
+}
+
+.today-summary {
+  background-color: white;
+  padding: 1.5rem;
+  border-radius: 12px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+  border: 1px solid var(--border-color);
+}
+
+.today-summary h3 {
+  margin-bottom: 1rem;
+  color: var(--primary-color);
+}
+
+.summary-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+}
+
+.summary-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: 1rem;
+  background-color: #f9f9f9;
+  border-radius: 8px;
+}
+
+.summary-label {
+  font-size: 0.9rem;
+  color: var(--light-text);
+  margin-bottom: 0.5rem;
+}
+
+.summary-value {
+  font-size: 1.2rem;
+  font-weight: 600;
+  color: var(--primary-color);
+  text-transform: capitalize;
+}
+
+.dashboard-sections {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+  gap: 2rem;
+}
+
+.dashboard-section {
+  background-color: white;
+  padding: 1.5rem;
+  border-radius: 12px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+  border: 1px solid var(--border-color);
+}
+
+.dashboard-section h3 {
+  margin-bottom: 1rem;
+  color: var(--primary-color);
+  border-bottom: 1px solid var(--border-color);
+  padding-bottom: 0.5rem;
+}
+
+.section-content {
+  max-height: 400px;
+  overflow-y: auto;
+}
+
+.no-data {
+  text-align: center;
+  color: var(--light-text);
+  font-style: italic;
+  padding: 2rem;
+}
+
+/* Responsive Design for New Elements */
+@media (max-width: 768px) {
+  .success-modal-content {
+    width: 95%;
+    padding: 1rem;
+  }
+  
+  .success-actions {
+    flex-direction: column;
+  }
+  
+  .copy-code-btn,
+  .print-btn,
+  .close-success-btn {
+    width: 100%;
+    justify-content: center;
+  }
+}

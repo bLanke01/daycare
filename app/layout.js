@@ -1,4 +1,4 @@
-// app/layout.js (Updated with better redirect logic)
+// app/layout.js (FIXED VERSION)
 'use client';
 
 import './globals.css';
@@ -29,25 +29,28 @@ function MainContent({ children }) {
   // Check admin setup on load - but be more specific about when to redirect
   useEffect(() => {
     // Skip this check for admin-setup page to avoid infinite loops
-    if (pathname === '/admin-setup') return;
+    if (pathname === '/admin-setup') {
+      setRedirecting(false);
+      return;
+    }
     
     // Only redirect to admin-setup if:
     // 1. We're done loading auth state
     // 2. Admin setup is definitely not complete (false, not null)
-    // 3. Someone is trying to access admin-specific pages OR trying to login as admin
-    // 4. NOT if they're just trying to sign up as parent
+    // 3. User is trying to access admin dashboard pages (not just login)
+    // 4. User is NOT already logged in as an admin
     
     const checkAndRedirect = async () => {
       if (!loading && adminSetupComplete === false) {
-        // Check if this is an admin-related action
-        const isAdminPage = pathname.startsWith('/admin');
-        const isAdminAuth = pathname.startsWith('/auth') && 
-                           (pathname.includes('type=admin') || 
-                            (typeof window !== 'undefined' && window.location.search.includes('type=admin')));
+        // Only redirect if user is trying to access admin dashboard, not just login
+        const isAdminDashboard = pathname.startsWith('/admin') && pathname !== '/admin-setup';
         
-        // Only redirect if accessing admin areas or admin auth
-        if (isAdminPage || isAdminAuth) {
-          console.log('Redirecting to admin setup because:', { isAdminPage, isAdminAuth });
+        // Don't redirect if user is just trying to login or if they're already an admin
+        const isJustTryingToLogin = pathname.startsWith('/auth');
+        const isAlreadyAdmin = user && userRole === 'admin';
+        
+        if (isAdminDashboard && !isAlreadyAdmin) {
+          console.log('Redirecting to admin setup - dashboard access without admin user');
           setRedirecting(true);
           router.push('/admin-setup');
         } else {
@@ -59,7 +62,7 @@ function MainContent({ children }) {
     };
 
     checkAndRedirect();
-  }, [loading, adminSetupComplete, router, pathname]);
+  }, [loading, adminSetupComplete, router, pathname, user, userRole]);
 
   // If we're still loading auth or redirecting, show loading
   if (loading || redirecting) {

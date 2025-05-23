@@ -1,8 +1,8 @@
-// components/admin/ChildrenManagement.js (Complete with Add Child Feature)
+// components/admin/ChildrenManagement.js (Updated with improved access code generation)
 'use client';
 
 import { useState, useEffect } from 'react';
-import { collection, getDocs, doc, updateDoc, onSnapshot, query, orderBy, addDoc, setDoc } from 'firebase/firestore';
+import { collection, getDocs, doc, updateDoc, onSnapshot, query, orderBy, addDoc, setDoc, where } from 'firebase/firestore';
 import { db } from '../../firebase/config';
 import ChildDetailsModal from './ChildDetailsModal';
 
@@ -117,134 +117,154 @@ const ChildrenManagement = () => {
 
   // Handle adding new child
   const handleAddChild = async (e) => {
-  e.preventDefault();
-  
-  try {
-    setLoading(true);
-    setError('');
-    setSuccessMessage(''); // Clear any previous messages
+    e.preventDefault();
     
-    // Generate access code for parent
-    const accessCode = generateAccessCode();
-    
-    // Prepare child data
-    const childData = {
-      // Child information
-      firstName: newChildData.firstName.trim(),
-      lastName: newChildData.lastName.trim(),
-      dateOfBirth: newChildData.dateOfBirth,
-      gender: newChildData.gender,
-      group: newChildData.group || calculateGroup(newChildData.dateOfBirth),
+    try {
+      setLoading(true);
+      setError('');
+      setSuccessMessage('');
       
-      // Parent information
-      parentFirstName: newChildData.parentFirstName.trim(),
-      parentLastName: newChildData.parentLastName.trim(),
-      parentEmail: newChildData.parentEmail.trim().toLowerCase(),
-      parentPhone: newChildData.parentPhone.trim(),
+      // Generate unique access code
+      let accessCode;
+      let isUnique = false;
       
-      // Medical and emergency information
-      allergies: newChildData.allergies ? 
-        newChildData.allergies.split(',').map(a => a.trim()).filter(a => a) : [],
-      medicalConditions: newChildData.medicalConditions ? 
-        newChildData.medicalConditions.split(',').map(m => m.trim()).filter(m => m) : [],
-      medications: newChildData.medications ? 
-        newChildData.medications.split(',').map(m => m.trim()).filter(m => m) : [],
-      emergencyContact: newChildData.emergencyContact.trim(),
-      emergencyPhone: newChildData.emergencyPhone.trim(),
-      emergencyRelationship: newChildData.emergencyRelationship.trim(),
-      doctorName: newChildData.doctorName.trim(),
-      doctorPhone: newChildData.doctorPhone.trim(),
+      // Ensure access code is unique
+      while (!isUnique) {
+        accessCode = generateAccessCode();
+        
+        // Check if this code already exists
+        const existingCodes = await getDocs(
+          query(collection(db, 'accessCodes'), where('code', '==', accessCode))
+        );
+        
+        if (existingCodes.empty) {
+          isUnique = true;
+        }
+      }
       
-      // Additional information
-      specialNeeds: newChildData.specialNeeds.trim(),
-      dietaryRestrictions: newChildData.dietaryRestrictions.trim(),
-      notes: newChildData.notes.trim(),
+      console.log('Generated unique access code:', accessCode);
       
-      // System fields
-      accessCode: accessCode,
-      parentRegistered: false,
-      parentId: null,
-      enrollmentStatus: 'active',
-      createdAt: new Date().toISOString(),
-      createdBy: 'admin',
-      updatedAt: new Date().toISOString()
-    };
-    
-    // Add child to Firestore
-    const childRef = await addDoc(collection(db, 'children'), childData);
-    console.log('Child added with ID:', childRef.id); // Debug log
-    
-    // Create access code document for parent registration
-    await setDoc(doc(db, 'accessCodes', accessCode), {
-      code: accessCode,
-      childId: childRef.id,
-      parentEmail: newChildData.parentEmail.trim().toLowerCase(),
-      parentName: `${newChildData.parentFirstName.trim()} ${newChildData.parentLastName.trim()}`,
-      childName: `${newChildData.firstName.trim()} ${newChildData.lastName.trim()}`,
-      createdAt: new Date().toISOString(),
-      expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(), // 30 days
-      maxUses: 1,
-      usesLeft: 1,
-      used: false,
-      note: `Access code for ${newChildData.parentFirstName.trim()} ${newChildData.parentLastName.trim()} - child: ${newChildData.firstName.trim()} ${newChildData.lastName.trim()}`
-    });
-    
-    console.log('Access code created:', accessCode); // Debug log
-    
-    // Show success message with access code
-    const successMsg = `🎉 SUCCESS! Child added to the system!
+      // Prepare child data
+      const childData = {
+        // Child information
+        firstName: newChildData.firstName.trim(),
+        lastName: newChildData.lastName.trim(),
+        dateOfBirth: newChildData.dateOfBirth,
+        gender: newChildData.gender,
+        group: newChildData.group || calculateGroup(newChildData.dateOfBirth),
+        
+        // Parent information
+        parentFirstName: newChildData.parentFirstName.trim(),
+        parentLastName: newChildData.parentLastName.trim(),
+        parentEmail: newChildData.parentEmail.trim().toLowerCase(),
+        parentPhone: newChildData.parentPhone.trim(),
+        
+        // Medical and emergency information
+        allergies: newChildData.allergies ? 
+          newChildData.allergies.split(',').map(a => a.trim()).filter(a => a) : [],
+        medicalConditions: newChildData.medicalConditions ? 
+          newChildData.medicalConditions.split(',').map(m => m.trim()).filter(m => m) : [],
+        medications: newChildData.medications ? 
+          newChildData.medications.split(',').map(m => m.trim()).filter(m => m) : [],
+        emergencyContact: newChildData.emergencyContact.trim(),
+        emergencyPhone: newChildData.emergencyPhone.trim(),
+        emergencyRelationship: newChildData.emergencyRelationship.trim(),
+        doctorName: newChildData.doctorName.trim(),
+        doctorPhone: newChildData.doctorPhone.trim(),
+        
+        // Additional information
+        specialNeeds: newChildData.specialNeeds.trim(),
+        dietaryRestrictions: newChildData.dietaryRestrictions.trim(),
+        notes: newChildData.notes.trim(),
+        
+        // System fields
+        accessCode: accessCode,
+        parentRegistered: false,
+        parentId: null,
+        enrollmentStatus: 'active',
+        createdAt: new Date().toISOString(),
+        createdBy: 'admin',
+        updatedAt: new Date().toISOString()
+      };
+      
+      // Add child to Firestore
+      const childRef = await addDoc(collection(db, 'children'), childData);
+      console.log('Child added with ID:', childRef.id);
+      
+      // Create access code document for parent registration
+      const accessCodeData = {
+        code: accessCode,
+        childId: childRef.id,
+        parentEmail: newChildData.parentEmail.trim().toLowerCase(),
+        parentName: `${newChildData.parentFirstName.trim()} ${newChildData.parentLastName.trim()}`,
+        childName: `${newChildData.firstName.trim()} ${newChildData.lastName.trim()}`,
+        createdAt: new Date().toISOString(),
+        expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(), // 30 days
+        maxUses: 1,
+        usesLeft: 1,
+        used: false,
+        parentId: null,
+        note: `Registration code for ${newChildData.parentFirstName.trim()} ${newChildData.parentLastName.trim()} - child: ${newChildData.firstName.trim()} ${newChildData.lastName.trim()}`
+      };
+      
+      await setDoc(doc(db, 'accessCodes', accessCode), accessCodeData);
+      console.log('Access code document created:', accessCode);
+      
+      // Show success message with access code
+      const successMsg = `🎉 SUCCESS! Child added to the system!
 
 👶 Child: ${newChildData.firstName} ${newChildData.lastName}
-👨‍👩‍👧‍👦 Parent: ${newChildData.parentFirstName} ${newChildData.parentLastName}
+📧 Parent: ${newChildData.parentFirstName} ${newChildData.parentLastName}
 📧 Email: ${newChildData.parentEmail}
 📱 Phone: ${newChildData.parentPhone}
+🏫 Group: ${childData.group}
 
 🔑 PARENT ACCESS CODE: ${accessCode}
 
-📋 IMPORTANT: Give this code to the parent so they can:
-- Sign up on the parent portal
-- Access their child's daily updates
-- View activities, meals, and attendance
+📋 IMPORTANT INSTRUCTIONS FOR PARENT:
+1. Give this access code to the parent
+2. Parent should visit your signup page
+3. Parent enters this code during registration
+4. Code will link their account to their child's profile
+5. Parent can then view daily updates, activities, meals, etc.
 
-⏰ Code expires in 30 days.
-💾 Code has been saved to the system.`;
+⏰ Code expires in 30 days
+💾 Code has been saved to the system
+🔗 Parent registration link: [Your website]/auth/signup?type=parent`;
 
-    setSuccessMessage(successMsg);
-    
-    // Reset form
-    setNewChildData({
-      firstName: '',
-      lastName: '',
-      dateOfBirth: '',
-      gender: '',
-      group: '',
-      parentFirstName: '',
-      parentLastName: '',
-      parentEmail: '',
-      parentPhone: '',
-      allergies: '',
-      medicalConditions: '',
-      medications: '',
-      emergencyContact: '',
-      emergencyPhone: '',
-      emergencyRelationship: '',
-      doctorName: '',
-      doctorPhone: '',
-      specialNeeds: '',
-      dietaryRestrictions: '',
-      notes: ''
-    });
-    
-    // Don't auto-close modal so admin can see the access code
-    // setShowAddChildModal(false); // Comment this out
-    
-  } catch (error) {
-    console.error('Error adding child:', error);
-    setError(`Failed to add child: ${error.message}`);
-  } finally {
-    setLoading(false);
-  }
-};
+      setSuccessMessage(successMsg);
+      
+      // Reset form
+      setNewChildData({
+        firstName: '',
+        lastName: '',
+        dateOfBirth: '',
+        gender: '',
+        group: '',
+        parentFirstName: '',
+        parentLastName: '',
+        parentEmail: '',
+        parentPhone: '',
+        allergies: '',
+        medicalConditions: '',
+        medications: '',
+        emergencyContact: '',
+        emergencyPhone: '',
+        emergencyRelationship: '',
+        doctorName: '',
+        doctorPhone: '',
+        specialNeeds: '',
+        dietaryRestrictions: '',
+        notes: ''
+      });
+      
+    } catch (error) {
+      console.error('Error adding child:', error);
+      setError(`Failed to add child: ${error.message}`);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   // Filter children
   const filteredChildren = children.filter(child => {
@@ -335,6 +355,14 @@ const ChildrenManagement = () => {
                   📋 Copy Access Code
                 </button>
                 <button 
+                  className="print-btn"
+                  onClick={() => {
+                    window.print();
+                  }}
+                >
+                  🖨️ Print Instructions
+                </button>
+                <button 
                   className="close-success-btn"
                   onClick={() => {
                     setSuccessMessage('');
@@ -406,8 +434,13 @@ const ChildrenManagement = () => {
                   </p>
                   <p className="parent-contact">{child.parentEmail}</p>
                   <span className={`registration-status ${child.parentRegistered ? 'registered' : 'pending'}`}>
-                    {child.parentRegistered ? '✅ Registered' : '⏳ Pending Registration'}
+                    {child.parentRegistered ? '✅ Parent Registered' : '⏳ Awaiting Parent Registration'}
                   </span>
+                  {!child.parentRegistered && (
+                    <div className="access-code-info">
+                      <small>Access Code: <span className="access-code">{child.accessCode}</span></small>
+                    </div>
+                  )}
                 </div>
               </div>
               
@@ -418,6 +451,17 @@ const ChildrenManagement = () => {
                 >
                   👁️ View Details
                 </button>
+                {!child.parentRegistered && (
+                  <button 
+                    className="resend-code-btn"
+                    onClick={() => {
+                      navigator.clipboard.writeText(child.accessCode);
+                      alert(`Access code ${child.accessCode} copied to clipboard!`);
+                    }}
+                  >
+                    📋 Copy Access Code
+                  </button>
+                )}
               </div>
             </div>
           ))
