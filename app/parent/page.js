@@ -1,8 +1,8 @@
-// app/parent/page.js (Fixed Parent Dashboard)
+// app/parent/page.js (Fixed - No Indexes Required)
 'use client';
 
 import { useState, useEffect } from 'react';
-import { collection, query, where, onSnapshot, orderBy, getDocs } from 'firebase/firestore';
+import { collection, query, where, onSnapshot, getDocs } from 'firebase/firestore';
 import { useAuth } from '../firebase/auth-context';
 import { db } from '../firebase/config';
 
@@ -173,27 +173,30 @@ export default function ParentDashboard() {
     loadChildren();
   }, [user, selectedChild]);
 
-  // Real-time listeners for selected child's data
+  // FIXED: Real-time listeners for selected child's data (No orderBy to avoid index requirements)
   useEffect(() => {
     if (!selectedChild) return;
 
     console.log('📡 Setting up real-time listeners for child:', selectedChild.id);
     const unsubscribes = [];
 
-    // Listen to activities
+    // Listen to activities (FIXED: no orderBy, will sort in memory)
     try {
       unsubscribes.push(
         onSnapshot(
           query(
             collection(db, 'activities'),
-            where('childId', '==', selectedChild.id),
-            orderBy('date', 'desc')
+            where('childId', '==', selectedChild.id)
           ),
           (snapshot) => {
             const activitiesData = [];
             snapshot.forEach(doc => {
               activitiesData.push({ id: doc.id, ...doc.data() });
             });
+            
+            // Sort by date in memory (most recent first)
+            activitiesData.sort((a, b) => new Date(b.date) - new Date(a.date));
+            
             setChildActivities(activitiesData.slice(0, 5)); // Show latest 5
             console.log(`📝 Loaded ${activitiesData.length} activities`);
           },
@@ -206,20 +209,23 @@ export default function ParentDashboard() {
       console.warn('⚠️ Could not set up activities listener:', activitiesError);
     }
 
-    // Listen to attendance
+    // Listen to attendance (FIXED: no orderBy, will sort in memory)
     try {
       unsubscribes.push(
         onSnapshot(
           query(
             collection(db, 'attendance'),
-            where('childId', '==', selectedChild.id),
-            orderBy('date', 'desc')
+            where('childId', '==', selectedChild.id)
           ),
           (snapshot) => {
             const attendanceData = [];
             snapshot.forEach(doc => {
               attendanceData.push({ id: doc.id, ...doc.data() });
             });
+            
+            // Sort by date in memory (most recent first)
+            attendanceData.sort((a, b) => new Date(b.date) - new Date(a.date));
+            
             setChildAttendance(attendanceData.slice(0, 7)); // Show latest week
             console.log(`📋 Loaded ${attendanceData.length} attendance records`);
           },
@@ -232,20 +238,23 @@ export default function ParentDashboard() {
       console.warn('⚠️ Could not set up attendance listener:', attendanceError);
     }
 
-    // Listen to meals
+    // Listen to meals (FIXED: no orderBy, will sort in memory)
     try {
       unsubscribes.push(
         onSnapshot(
           query(
             collection(db, 'childMeals'),
-            where('childId', '==', selectedChild.id),
-            orderBy('date', 'desc')
+            where('childId', '==', selectedChild.id)
           ),
           (snapshot) => {
             const mealsData = [];
             snapshot.forEach(doc => {
               mealsData.push({ id: doc.id, ...doc.data() });
             });
+            
+            // Sort by date in memory (most recent first)
+            mealsData.sort((a, b) => new Date(b.date) - new Date(a.date));
+            
             setChildMeals(mealsData.slice(0, 10)); // Show latest 10
             console.log(`🍽️ Loaded ${mealsData.length} meal records`);
           },
@@ -258,20 +267,23 @@ export default function ParentDashboard() {
       console.warn('⚠️ Could not set up meals listener:', mealsError);
     }
 
-    // Listen to naps
+    // Listen to naps (FIXED: no orderBy, will sort in memory)
     try {
       unsubscribes.push(
         onSnapshot(
           query(
             collection(db, 'naps'),
-            where('childId', '==', selectedChild.id),
-            orderBy('date', 'desc')
+            where('childId', '==', selectedChild.id)
           ),
           (snapshot) => {
             const napsData = [];
             snapshot.forEach(doc => {
               napsData.push({ id: doc.id, ...doc.data() });
             });
+            
+            // Sort by date in memory (most recent first)
+            napsData.sort((a, b) => new Date(b.date) - new Date(a.date));
+            
             setChildNaps(napsData.slice(0, 7)); // Show latest week
             console.log(`😴 Loaded ${napsData.length} nap records`);
           },
@@ -523,13 +535,14 @@ export default function ParentDashboard() {
                     {childActivities.map(activity => (
                       <div key={activity.id} className="activity-item">
                         <div className="activity-header">
-                          <span className={`activity-type ${activity.type.toLowerCase()}`}>
-                            {activity.type}
+                          <span className={`activity-type ${(activity.activityType || activity.type || 'other').toLowerCase()}`}>
+                            {activity.activityType || activity.type || 'Activity'}
                           </span>
                           <span className="activity-date">
                             {new Date(activity.date).toLocaleDateString()}
                           </span>
                         </div>
+                        <h4 className="activity-title">{activity.title}</h4>
                         <p className="activity-description">{activity.description}</p>
                         {activity.notes && (
                           <p className="activity-notes">Notes: {activity.notes}</p>

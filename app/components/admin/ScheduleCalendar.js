@@ -1,49 +1,63 @@
 // components/admin/ScheduleCalendar.js
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { 
+  collection, 
+  addDoc, 
+  getDocs, 
+  deleteDoc, 
+  doc, 
+  updateDoc, 
+  query, 
+  where, 
+  Timestamp 
+} from 'firebase/firestore';
+import { db } from '../../firebase/config';
 
 const ScheduleCalendar = () => {
   // State for current date and events
   const today = new Date();
   const [currentMonth, setCurrentMonth] = useState(today.getMonth());
   const [currentYear, setCurrentYear] = useState(today.getFullYear());
+  const [events, setEvents] = useState([]);
+  const [loading, setLoading] = useState(true);
   
-  // Mock data for events/schedules
-  const [events, setEvents] = useState([
-    { 
-      id: 1, 
-      title: 'Field Trip to Zoo', 
-      date: new Date(today.getFullYear(), today.getMonth(), 15), 
-      group: 'Pre-K',
-      time: '9:00 AM - 2:00 PM',
-      description: 'Children will visit the local zoo. Parents need to provide permission slips and lunch.'
-    },
-    { 
-      id: 2, 
-      title: 'Parent-Teacher Meeting', 
-      date: new Date(today.getFullYear(), today.getMonth(), 10), 
-      group: 'All',
-      time: '4:00 PM - 6:00 PM',
-      description: 'Quarterly parent-teacher meetings to discuss child progress.'
-    },
-    { 
-      id: 3, 
-      title: 'Vaccination Day', 
-      date: new Date(today.getFullYear(), today.getMonth(), 22), 
-      group: 'Infant, Toddler',
-      time: '10:00 AM - 12:00 PM',
-      description: 'Routine vaccinations provided by visiting healthcare professionals.'
-    },
-    { 
-      id: 4, 
-      title: 'Summer Program Registration Deadline', 
-      date: new Date(today.getFullYear(), today.getMonth(), 28), 
-      group: 'All',
-      time: 'All Day',
-      description: 'Last day to register for summer program activities.'
-    }
-  ]);
+  // Fetch events from Firestore
+  useEffect(() => {
+    const fetchEvents = async () => {
+      try {
+        const startOfMonth = new Date(currentYear, currentMonth, 1);
+        const endOfMonth = new Date(currentYear, currentMonth + 1, 0);
+        
+        const eventsRef = collection(db, 'events');
+        const q = query(
+          eventsRef,
+          where('date', '>=', Timestamp.fromDate(startOfMonth)),
+          where('date', '<=', Timestamp.fromDate(endOfMonth))
+        );
+        
+        const querySnapshot = await getDocs(q);
+        const fetchedEvents = [];
+        querySnapshot.forEach((doc) => {
+          const data = doc.data();
+          fetchedEvents.push({
+            id: doc.id,
+            ...data,
+            date: data.date.toDate() // Convert Timestamp to Date
+          });
+        });
+        
+        setEvents(fetchedEvents);
+        setLoading(false);
+      } catch (error) {
+        console.error('Error fetching events:', error);
+        setLoading(false);
+      }
+    };
+
+    fetchEvents();
+  }, [currentMonth, currentYear]);
   
   // State for new event form
   const [showEventForm, setShowEventForm] = useState(false);
@@ -84,11 +98,12 @@ const ScheduleCalendar = () => {
     // Add cells for each day of the month
     for (let day = 1; day <= daysInMonth; day++) {
       const date = new Date(currentYear, currentMonth, day);
-      const dayEvents = events.filter(event => 
-        event.date.getDate() === day && 
-        event.date.getMonth() === currentMonth && 
-        event.date.getFullYear() === currentYear
-      );
+      const dayEvents = events.filter(event => {
+        const eventDate = event.date;
+        return eventDate.getDate() === day &&
+               eventDate.getMonth() === currentMonth &&
+               eventDate.getFullYear() === currentYear;
+      });
       
       calendarDays.push({ day, date, events: dayEvents });
     }
@@ -142,29 +157,60 @@ const ScheduleCalendar = () => {
   };
   
   // Handle form submission
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     
-    const dateObj = new Date(newEvent.date);
-    
-    const newEventObj = {
-      id: events.length + 1,
-      title: newEvent.title,
-      date: dateObj,
-      group: newEvent.group,
-      time: newEvent.time,
-      description: newEvent.description
-    };
-    
-    setEvents([...events, newEventObj]);
-    setShowEventForm(false);
-    setNewEvent({
-      title: '',
-      date: '',
-      group: '',
-      time: '',
-      description: ''
-    });
+    try {
+      const dateObj = new Date(newEvent.date);
+      const eventData = {
+        title: newEvent.title,
+        date: Timestamp.fromDate(dateObj),
+        group: newEvent.group,
+        time: newEvent.time,
+        description: newEvent.description,
+        createdAt: Timestamp.now()
+      };
+      
+      if (newEvent.id) {
+        // Update existing event
+        const eventRef = doc(db, 'events', newEvent.id);
+        await updateDoc(eventRef, eventData);
+        
+        setEvents(events.map(event => 
+          event.id === newEvent.id 
+            ? { ...eventData, id: newEvent.id, date: dateObj } 
+            : event
+        ));
+      } else {
+        // Add new event
+        const docRef = await addDoc(collection(db, 'events'), eventData);
+        setEvents([...events, { ...eventData, id: docRef.id, date: dateObj }]);
+      }
+      
+      setShowEventForm(false);
+      setNewEvent({
+        title: '',
+        date: '',
+        group: '',
+        time: '',
+        description: ''
+      });
+    } catch (error) {
+      console.error('Error saving event:', error);
+      alert('Error saving event. Please try again.');
+    }
+  };
+  
+  // Handle event deletion
+  const handleDeleteEvent = async (eventId) => {
+    try {
+      await deleteDoc(doc(db, 'events', eventId));
+      setEvents(events.filter(event => event.id !== eventId));
+      setShowEventDetails(false);
+    } catch (error) {
+      console.error('Error deleting event:', error);
+      alert('Error deleting event. Please try again.');
+    }
   };
   
   // Format month and year for display
@@ -174,6 +220,15 @@ const ScheduleCalendar = () => {
   ];
   
   const calendarDays = generateCalendarDays();
+  
+  if (loading) {
+    return (
+      <div className="loading-overlay">
+        <div className="loading-spinner"></div>
+        <p>Loading calendar...</p>
+      </div>
+    );
+  }
   
   return (
     <div className="schedule-calendar">
@@ -194,67 +249,70 @@ const ScheduleCalendar = () => {
         </button>
       </div>
       
-      <div className="calendar-navigation">
-        <button className="nav-btn" onClick={goToPreviousMonth}>
-          &lt; Previous
-        </button>
-        <h2 className="current-month">
-          {monthNames[currentMonth]} {currentYear}
-        </h2>
-        <button className="nav-btn" onClick={goToNextMonth}>
-          Next &gt;
-        </button>
-      </div>
-      
-      <div className="calendar">
-        <div className="calendar-header">
-          <div className="weekday">Sunday</div>
-          <div className="weekday">Monday</div>
-          <div className="weekday">Tuesday</div>
-          <div className="weekday">Wednesday</div>
-          <div className="weekday">Thursday</div>
-          <div className="weekday">Friday</div>
-          <div className="weekday">Saturday</div>
+      <div className="calendar-container">
+        <div className="calendar-navigation">
+          <button className="nav-btn" onClick={goToPreviousMonth}>
+            &lt; Previous
+          </button>
+          <h2 className="current-month">
+            {monthNames[currentMonth]} {currentYear}
+          </h2>
+          <button className="nav-btn" onClick={goToNextMonth}>
+            Next &gt;
+          </button>
         </div>
-        
+
         <div className="calendar-grid">
-          {calendarDays.map((calendarDay, index) => (
-            <div 
-              key={index} 
-              className={`calendar-day ${!calendarDay.day ? 'empty' : ''} ${
-                calendarDay.day === today.getDate() && 
-                currentMonth === today.getMonth() && 
-                currentYear === today.getFullYear() ? 'today' : ''
-              }`}
-              onClick={() => calendarDay.day && handleDateClick(calendarDay.date)}
-            >
-              {calendarDay.day && (
-                <>
-                  <div className="day-number">{calendarDay.day}</div>
-                  <div className="day-events">
-                    {calendarDay.events.map(event => (
-                      <div 
-                        key={event.id} 
-                        className="event"
-                        onClick={(e) => handleEventClick(event, e)}
-                      >
-                        <div className="event-title">{event.title}</div>
-                      </div>
-                    ))}
-                  </div>
-                </>
-              )}
-            </div>
-          ))}
+          <div className="calendar-header">
+            <div className="weekday">Sunday</div>
+            <div className="weekday">Monday</div>
+            <div className="weekday">Tuesday</div>
+            <div className="weekday">Wednesday</div>
+            <div className="weekday">Thursday</div>
+            <div className="weekday">Friday</div>
+            <div className="weekday">Saturday</div>
+          </div>
+
+          <div className="calendar-days">
+            {calendarDays.map((calendarDay, index) => (
+              <div 
+                key={index} 
+                className={`calendar-day ${!calendarDay.day ? 'empty' : ''} ${
+                  calendarDay.day === today.getDate() && 
+                  currentMonth === today.getMonth() && 
+                  currentYear === today.getFullYear() ? 'today' : ''
+                }`}
+                onClick={() => calendarDay.day && handleDateClick(calendarDay.date)}
+              >
+                {calendarDay.day && (
+                  <>
+                    <div className="day-number">{calendarDay.day}</div>
+                    <div className="day-events">
+                      {calendarDay.events.map(event => (
+                        <div 
+                          key={event.id} 
+                          className="event"
+                          onClick={(e) => handleEventClick(event, e)}
+                        >
+                          <div className="event-title">{event.title}</div>
+                          <div className="event-time">{event.time}</div>
+                        </div>
+                      ))}
+                    </div>
+                  </>
+                )}
+              </div>
+            ))}
+          </div>
         </div>
       </div>
-      
+
       {/* Event Form Modal */}
       {showEventForm && (
         <div className="modal-overlay">
           <div className="modal">
             <div className="modal-header">
-              <h2>Add New Event</h2>
+              <h2>{newEvent.id ? 'Edit Event' : 'Add New Event'}</h2>
               <button 
                 className="close-btn"
                 onClick={() => setShowEventForm(false)}
@@ -332,7 +390,9 @@ const ScheduleCalendar = () => {
               </div>
               
               <div className="form-actions">
-                <button type="submit" className="submit-btn">Add Event</button>
+                <button type="submit" className="submit-btn">
+                  {newEvent.id ? 'Save Changes' : 'Add Event'}
+                </button>
                 <button 
                   type="button" 
                   className="cancel-btn"
@@ -360,7 +420,7 @@ const ScheduleCalendar = () => {
               </button>
             </div>
             
-            <div className="event-details">
+            <div className="modal-content">
               <h3>{selectedEvent.title}</h3>
               
               <div className="detail-item">
@@ -395,19 +455,19 @@ const ScheduleCalendar = () => {
               <button 
                 className="edit-btn"
                 onClick={() => {
-                  // Would implement edit functionality here
+                  setNewEvent({
+                    ...selectedEvent,
+                    date: selectedEvent.date.toISOString().split('T')[0]
+                  });
                   setShowEventDetails(false);
+                  setShowEventForm(true);
                 }}
               >
                 Edit Event
               </button>
               <button 
                 className="delete-btn"
-                onClick={() => {
-                  // Delete the event
-                  setEvents(events.filter(event => event.id !== selectedEvent.id));
-                  setShowEventDetails(false);
-                }}
+                onClick={() => handleDeleteEvent(selectedEvent.id)}
               >
                 Delete Event
               </button>

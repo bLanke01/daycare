@@ -24,7 +24,7 @@ const AdminSidebar = () => {
   
   const otherItems = [
     { icon: '⚙️', label: 'Settings', path: '/admin/settings' },
-    { icon: '👤', label: 'Accounts', path: '/admin/accounts' },
+    { icon: '👤', label: 'Account', path: '/admin/account' },
     { icon: '❓', label: 'Help', path: '/admin/help' },
   ];
   

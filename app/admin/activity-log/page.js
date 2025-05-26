@@ -1,4 +1,4 @@
-// components/admin/EnhancedActivityLog.js
+// components/admin/ActivityLog.js
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -13,7 +13,7 @@ import {
 } from 'firebase/firestore';
 import { db } from '../../firebase/config';
 
-const EnhancedActivityLog = () => {
+const ActivityLog = () => {
   const [children, setChildren] = useState([]);
   const [activities, setActivities] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -24,7 +24,7 @@ const EnhancedActivityLog = () => {
   const [filterDate, setFilterDate] = useState('');
   const [selectedChild, setSelectedChild] = useState(null);
 
-  // Enhanced activity form state
+  //  activity form state
   const [newActivity, setNewActivity] = useState({
     childId: '',
     activityType: 'Learning',
@@ -326,7 +326,7 @@ const EnhancedActivityLog = () => {
     if (!groups[date]) {
       groups[date] = [];
     }
-    groups[date].push(activity);
+    groups[date].push(activity)
     return groups;
   }, {});
 
@@ -337,9 +337,9 @@ const EnhancedActivityLog = () => {
   };
 
   return (
-    <div className="enhanced-activity-log">
+    <div className="activity-log">
       <div className="page-header">
-        <h1>📝 Enhanced Activity Log</h1>
+        <h1>📝  Activity Log</h1>
         <button 
           className="add-activity-btn"
           onClick={() => setShowForm(true)}
@@ -758,4 +758,4 @@ const EnhancedActivityLog = () => {
   );
 };
 
-export default EnhancedActivityLog;
+export default ActivityLog;
