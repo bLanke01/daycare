@@ -605,8 +605,8 @@ const ActivitiesTab = ({ activities, onAddActivity, loading }) => {
           activities.map(activity => (
             <div key={activity.id} className="activity-card">
               <div className="activity-header">
-                <span className={`activity-type ${activity.type.toLowerCase()}`}>
-                  {activity.type}
+                <span className={`activity-type ${activity.type?.toLowerCase() || 'other'}`}>
+                  {activity.type || 'Other'}
                 </span>
                 <span className="activity-date">
                   {new Date(activity.date).toLocaleDateString()}
