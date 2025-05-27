@@ -62,10 +62,10 @@ const AdminDashboardLayout = ({ children }) => {
                 </li>
                 
                 <li className="nav-item">
-                  <Link href="/admin/payment">
+                  <Link href="/admin/invoices">
                     <div className="nav-link">
                       <div className="nav-icon">💰</div>
-                      <span>Payment</span>
+                      <span>Invoice</span>
                     </div>
                   </Link>
                 </li>
