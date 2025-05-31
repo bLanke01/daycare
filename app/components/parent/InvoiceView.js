@@ -1,16 +1,13 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { collection, query, where, onSnapshot, doc, updateDoc } from 'firebase/firestore';
+import { collection, query, where, onSnapshot } from 'firebase/firestore';
 import { db } from '../../firebase/config';
 import { useAuth } from '../../firebase/auth-context';
-import PaymentProvider from '../payment/PaymentProvider';
-import PaymentForm from '../payment/PaymentForm';
 
 export default function InvoiceView() {
   const [invoices, setInvoices] = useState([]);
   const [selectedInvoice, setSelectedInvoice] = useState(null);
-  const [showPayment, setShowPayment] = useState(false);
   const [loading, setLoading] = useState(true);
   const { user } = useAuth();
 
@@ -34,54 +31,8 @@ export default function InvoiceView() {
     return () => unsubscribe();
   }, [user]);
 
-  const handlePaymentSuccess = async (paymentIntent) => {
-    try {
-      if (!selectedInvoice?.id) {
-        throw new Error('No invoice selected');
-      }
-
-      const invoiceRef = doc(db, 'invoices', selectedInvoice.id);
-      await updateDoc(invoiceRef, {
-        status: 'paid',
-        paymentId: paymentIntent.id,
-        paymentMethod: 'card',
-        paidAt: new Date().toISOString()
-      });
-
-      setShowPayment(false);
-      setSelectedInvoice(null);
-    } catch (error) {
-      console.error('Error updating invoice:', error);
-      throw new Error('Failed to update invoice status');
-    }
-  };
-
-  const handlePaymentError = (error) => {
-    console.error('Payment failed:', error);
-  };
-
   if (loading) {
     return <div className="loading">Loading invoices...</div>;
-  }
-
-  if (showPayment && selectedInvoice) {
-    return (
-      <div className="payment-container">
-        <button 
-          className="back-btn"
-          onClick={() => setShowPayment(false)}
-        >
-          ← Back to Invoice
-        </button>
-        <PaymentProvider>
-          <PaymentForm
-            amount={selectedInvoice.totalAmount}
-            onSuccess={handlePaymentSuccess}
-            onError={handlePaymentError}
-          />
-        </PaymentProvider>
-      </div>
-    );
   }
 
   return (
@@ -149,13 +100,31 @@ export default function InvoiceView() {
             </div>
 
             {selectedInvoice.status === 'pending' && (
-              <div className="invoice-actions">
-                <button 
-                  className="pay-btn"
-                  onClick={() => setShowPayment(true)}
-                >
-                  Pay Now
-                </button>
+              <div className="payment-instructions">
+                <h4>Payment Instructions</h4>
+                <p>Please send payment via e-transfer to:</p>
+                <div className="e-transfer-details">
+                  <p><strong>Email:</strong> {selectedInvoice.paymentEmail}</p>
+                  <p><strong>Amount:</strong> ${selectedInvoice.totalAmount.toFixed(2)}</p>
+                  <p><strong>Reference:</strong> Invoice #{selectedInvoice.invoiceNo}</p>
+                </div>
+                <div className="payment-steps">
+                  <p><strong>Steps to complete payment:</strong></p>
+                  <ol>
+                    <li>Send the e-transfer to the email address above</li>
+                    <li>Include the invoice number as reference</li>
+                    <li>After sending the payment, please notify the admin through the message system</li>
+                    <li>The admin will verify the payment and mark the invoice as paid</li>
+                  </ol>
+                </div>
+              </div>
+            )}
+
+            {selectedInvoice.status === 'paid' && (
+              <div className="payment-confirmation">
+                <p><strong>Payment Received</strong></p>
+                <p>Date: {new Date(selectedInvoice.paidAt).toLocaleDateString()}</p>
+                <p>Thank you for your payment!</p>
               </div>
             )}
           </div>
