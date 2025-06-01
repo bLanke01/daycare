@@ -19,11 +19,11 @@ export default function AdminSettings() {
         [setting]: value
       }));
       
-       Update settings in Firestore (you'll need to implement this with your user system)
-       const userSettingsRef = doc(db, 'adminSettings', userId);
-       await updateDoc(userSettingsRef, {
-         [setting]: value
-       });
+      // Update settings in Firestore (you'll need to implement this with your user system)
+      // const userSettingsRef = doc(db, 'adminSettings', userId);
+      // await updateDoc(userSettingsRef, {
+      //   [setting]: value
+      // });
     } catch (error) {
       console.error('Error updating settings:', error);
       alert('Failed to update settings. Please try again.');
