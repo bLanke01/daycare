@@ -161,7 +161,10 @@ const ScheduleCalendar = () => {
     e.preventDefault();
     
     try {
-      const dateObj = new Date(newEvent.date);
+      // Create a date object that preserves the selected date
+      const [year, month, day] = newEvent.date.split('-').map(Number);
+      const dateObj = new Date(year, month - 1, day); // month is 0-based in Date constructor
+      
       const eventData = {
         title: newEvent.title,
         date: Timestamp.fromDate(dateObj),

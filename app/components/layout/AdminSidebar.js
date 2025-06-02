@@ -10,7 +10,6 @@ const AdminSidebar = () => {
   // Define menu items
   const menuItems = [
     { icon: '📊', label: 'Dashboard', path: '/admin' },
-    { icon: '👥', label: 'Staff Management', path: '/admin/staff' },
     { icon: '🔑', label: 'Access Codes', path: '/admin/access-codes' },
     { icon: '📅', label: 'View Schedules & Calendar', path: '/admin/schedules' },
     { icon: '💰', label: 'Payment', path: '/admin/payment' },

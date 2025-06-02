@@ -189,7 +189,9 @@ export const AuthProvider = ({ children }) => {
     try {
       console.log('🚪 Signing out user...');
       await signOut(auth);
-      router.push('/');
+      setUserRole(null);
+      setAdminSetupComplete(null);
+      router.push('/auth');
       console.log('✅ User signed out successfully');
       return { success: true };
     } catch (error) {
