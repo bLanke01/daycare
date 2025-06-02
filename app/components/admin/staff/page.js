@@ -1,5 +1,5 @@
 // app/admin/staff/page.js
-import StaffManagement from './StaffManagement';
+import StaffManagement from '../StaffManagement';
 
 export default function StaffPage() {
   return <StaffManagement />;
