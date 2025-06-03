@@ -7537,3 +7537,1228 @@ button[type="button"]:hover {
 .delete-btn:hover {
   background: #b91c1c;
 }
+
+/* Google Account Linking Styles */
+
+.google-linking-container {
+  background: white;
+  border-radius: 12px;
+  padding: 24px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  margin-bottom: 24px;
+}
+
+.section-header h3 {
+  margin: 0 0 8px 0;
+  color: #333;
+  font-size: 20px;
+  font-weight: 600;
+}
+
+.section-header p {
+  margin: 0 0 20px 0;
+  color: #666;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+/* Status Indicators */
+.status-indicator {
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+  padding: 20px;
+  border-radius: 8px;
+  margin-bottom: 20px;
+}
+
+.status-indicator.linked {
+  background: #e8f5e8;
+  border: 1px solid #c8e6c9;
+}
+
+.status-indicator.unlinked {
+  background: #f5f5f5;
+  border: 1px solid #e0e0e0;
+}
+
+.status-icon {
+  font-size: 24px;
+  line-height: 1;
+  margin-top: 2px;
+}
+
+.status-info h4 {
+  margin: 0 0 8px 0;
+  color: #333;
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.status-info p {
+  margin: 0;
+  color: #666;
+  font-size: 14px;
+  line-height: 1.4;
+}
+
+/* Google Account Info */
+.google-account-info {
+  background: white;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  padding: 16px;
+  margin: 16px 0;
+}
+
+.account-details {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.google-avatar {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  border: 2px solid #e0e0e0;
+}
+
+.account-text p {
+  margin: 4px 0;
+  font-size: 14px;
+  color: #333;
+}
+
+.account-text strong {
+  color: #555;
+}
+
+/* Benefits List */
+.benefits-list {
+  margin: 16px 0;
+}
+
+.benefits-list h5 {
+  margin: 0 0 12px 0;
+  color: #333;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.benefits-list ul {
+  margin: 0;
+  padding-left: 0;
+  list-style: none;
+}
+
+.benefits-list li {
+  padding: 6px 0;
+  font-size: 14px;
+  color: #555;
+  line-height: 1.4;
+}
+
+/* Action Buttons */
+.account-actions {
+  margin-top: 20px;
+}
+
+.link-btn {
+  background: #4285f4;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  padding: 12px 20px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.link-btn:hover:not(:disabled) {
+  background: #3367d6;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(66, 133, 244, 0.3);
+}
+
+.link-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+.unlink-btn {
+  background: #dc3545;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  padding: 10px 16px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.unlink-btn:hover:not(:disabled) {
+  background: #c82333;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(220, 53, 69, 0.3);
+}
+
+.unlink-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+/* Google Button Content */
+.google-btn-content {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.google-icon {
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
+}
+
+/* Button Loading State */
+.btn-loading {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.btn-loading .spinner {
+  width: 16px;
+  height: 16px;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-top: 2px solid white;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* Security Note */
+.security-note {
+  background: #f8f9fa;
+  border: 1px solid #e9ecef;
+  border-radius: 8px;
+  padding: 16px;
+  margin-top: 24px;
+}
+
+.security-note h5 {
+  margin: 0 0 12px 0;
+  color: #333;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.security-note ul {
+  margin: 0;
+  padding-left: 16px;
+}
+
+.security-note li {
+  font-size: 13px;
+  color: #666;
+  line-height: 1.4;
+  margin-bottom: 6px;
+}
+
+/* Message Styles */
+.success-message {
+  background: #d4edda;
+  border: 1px solid #c3e6cb;
+  border-radius: 6px;
+  padding: 12px 16px;
+  margin-bottom: 16px;
+  color: #155724;
+  font-size: 14px;
+  line-height: 1.4;
+}
+
+.error-message {
+  background: #f8d7da;
+  border: 1px solid #f5c6cb;
+  border-radius: 6px;
+  padding: 12px 16px;
+  margin-bottom: 16px;
+  color: #721c24;
+  font-size: 14px;
+  line-height: 1.4;
+}
+
+.status-message {
+  background: #d1ecf1;
+  border: 1px solid #bee5eb;
+  border-radius: 6px;
+  padding: 12px 16px;
+  margin-bottom: 16px;
+  color: #0c5460;
+  font-size: 14px;
+}
+
+/* Auth Form Enhancements */
+.auth-subtitle {
+  text-align: center;
+  color: #666;
+  font-size: 14px;
+  margin-bottom: 24px;
+  line-height: 1.4;
+}
+
+.signup-benefits {
+  margin-top: 24px;
+  padding-top: 20px;
+  border-top: 1px solid #e0e0e0;
+}
+
+.signup-benefits h4 {
+  margin: 0 0 12px 0;
+  color: #333;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.signup-benefits ul {
+  margin: 0;
+  padding-left: 0;
+  list-style: none;
+}
+
+.signup-benefits li {
+  padding: 4px 0;
+  font-size: 13px;
+  color: #666;
+  line-height: 1.3;
+}
+
+/* Responsive Design */
+@media (max-width: 480px) {
+  .google-linking-container {
+    padding: 16px;
+  }
+  
+  .status-indicator {
+    flex-direction: column;
+    gap: 12px;
+    padding: 16px;
+  }
+  
+  .status-icon {
+    font-size: 20px;
+  }
+  
+  .account-details {
+    flex-direction: column;
+    text-align: center;
+    gap: 8px;
+  }
+  
+  .google-avatar {
+    width: 40px;
+    height: 40px;
+  }
+  
+  .link-btn,
+  .unlink-btn {
+    width: 100%;
+    justify-content: center;
+  }
+}
+
+/* Google Account Linking Styles */
+
+.google-linking-container {
+  background: white;
+  border-radius: 12px;
+  padding: 24px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  margin-bottom: 24px;
+}
+
+.section-header h3 {
+  margin: 0 0 8px 0;
+  color: #333;
+  font-size: 20px;
+  font-weight: 600;
+}
+
+.section-header p {
+  margin: 0 0 20px 0;
+  color: #666;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+/* Status Indicators */
+.status-indicator {
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+  padding: 20px;
+  border-radius: 8px;
+  margin-bottom: 20px;
+}
+
+.status-indicator.linked {
+  background: #e8f5e8;
+  border: 1px solid #c8e6c9;
+}
+
+.status-indicator.unlinked {
+  background: #f5f5f5;
+  border: 1px solid #e0e0e0;
+}
+
+.status-icon {
+  font-size: 24px;
+  line-height: 1;
+  margin-top: 2px;
+}
+
+.status-info h4 {
+  margin: 0 0 8px 0;
+  color: #333;
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.status-info p {
+  margin: 0;
+  color: #666;
+  font-size: 14px;
+  line-height: 1.4;
+}
+
+/* Google Account Info */
+.google-account-info {
+  background: white;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  padding: 16px;
+  margin: 16px 0;
+}
+
+.account-details {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.google-avatar {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  border: 2px solid #e0e0e0;
+}
+
+.account-text p {
+  margin: 4px 0;
+  font-size: 14px;
+  color: #333;
+}
+
+.account-text strong {
+  color: #555;
+}
+
+/* Benefits List */
+.benefits-list {
+  margin: 16px 0;
+}
+
+.benefits-list h5 {
+  margin: 0 0 12px 0;
+  color: #333;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.benefits-list ul {
+  margin: 0;
+  padding-left: 0;
+  list-style: none;
+}
+
+.benefits-list li {
+  padding: 6px 0;
+  font-size: 14px;
+  color: #555;
+  line-height: 1.4;
+}
+
+/* Action Buttons */
+.account-actions {
+  margin-top: 20px;
+}
+
+.link-btn {
+  background: #4285f4;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  padding: 12px 20px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.link-btn:hover:not(:disabled) {
+  background: #3367d6;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(66, 133, 244, 0.3);
+}
+
+.link-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+.unlink-btn {
+  background: #dc3545;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  padding: 10px 16px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.unlink-btn:hover:not(:disabled) {
+  background: #c82333;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(220, 53, 69, 0.3);
+}
+
+.unlink-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+/* Google Button Content */
+.google-btn-content {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.google-icon {
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
+}
+
+/* Button Loading State */
+.btn-loading {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.btn-loading .spinner {
+  width: 16px;
+  height: 16px;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-top: 2px solid white;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* Security Note */
+.security-note {
+  background: #f8f9fa;
+  border: 1px solid #e9ecef;
+  border-radius: 8px;
+  padding: 16px;
+  margin-top: 24px;
+}
+
+.security-note h5 {
+  margin: 0 0 12px 0;
+  color: #333;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.security-note ul {
+  margin: 0;
+  padding-left: 16px;
+}
+
+.security-note li {
+  font-size: 13px;
+  color: #666;
+  line-height: 1.4;
+  margin-bottom: 6px;
+}
+
+/* Message Styles */
+.success-message {
+  background: #d4edda;
+  border: 1px solid #c3e6cb;
+  border-radius: 6px;
+  padding: 12px 16px;
+  margin-bottom: 16px;
+  color: #155724;
+  font-size: 14px;
+  line-height: 1.4;
+}
+
+.error-message {
+  background: #f8d7da;
+  border: 1px solid #f5c6cb;
+  border-radius: 6px;
+  padding: 12px 16px;
+  margin-bottom: 16px;
+  color: #721c24;
+  font-size: 14px;
+  line-height: 1.4;
+}
+
+.status-message {
+  background: #d1ecf1;
+  border: 1px solid #bee5eb;
+  border-radius: 6px;
+  padding: 12px 16px;
+  margin-bottom: 16px;
+  color: #0c5460;
+  font-size: 14px;
+}
+
+/* Auth Form Enhancements */
+.auth-subtitle {
+  text-align: center;
+  color: #666;
+  font-size: 14px;
+  margin-bottom: 24px;
+  line-height: 1.4;
+}
+
+.signup-benefits {
+  margin-top: 24px;
+  padding-top: 20px;
+  border-top: 1px solid #e0e0e0;
+}
+
+.signup-benefits h4 {
+  margin: 0 0 12px 0;
+  color: #333;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.signup-benefits ul {
+  margin: 0;
+  padding-left: 0;
+  list-style: none;
+}
+
+.signup-benefits li {
+  padding: 4px 0;
+  font-size: 13px;
+  color: #666;
+  line-height: 1.3;
+}
+
+/* Email Verification Styles */
+.verification-help {
+  margin-top: 24px;
+  padding: 16px;
+  background: #f8f9fa;
+  border: 1px solid #e9ecef;
+  border-radius: 8px;
+}
+
+.verification-help h4 {
+  margin: 0 0 12px 0;
+  color: #333;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.verification-help ul {
+  margin: 0;
+  padding-left: 16px;
+}
+
+.verification-help li {
+  font-size: 13px;
+  color: #666;
+  line-height: 1.4;
+  margin-bottom: 6px;
+}
+
+/* Enhanced success message */
+.success-message pre {
+  white-space: pre-wrap;
+  font-family: inherit;
+  font-size: 14px;
+  line-height: 1.6;
+  margin: 0;
+}
+
+/* Auth info enhancements */
+.auth-info p {
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+}
+
+/* Small text warnings */
+small {
+  display: block;
+  margin-top: 4px;
+  font-size: 12px;
+  color: #666;
+  line-height: 1.3;
+}
+
+small:before {
+  content: '';
+  margin-right: 4px;
+}
+
+/* Verification required warning */
+.form-group small {
+  color: #f57c00;
+  font-weight: 500;
+}
+
+/* Enhanced error messages for verification */
+.error-message {
+  background: #ffebee;
+  border: 1px solid #ffcdd2;
+  border-radius: 6px;
+  padding: 12px 16px;
+  margin-bottom: 16px;
+  color: #c62828;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+/* Success message with verification info */
+.success-message {
+  background: #e8f5e8;
+  border: 1px solid #c8e6c9;
+  border-radius: 8px;
+  padding: 16px;
+  margin-bottom: 16px;
+  color: #2e7d32;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+/* Resend verification page styles */
+.auth-page {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #f5f5f5;
+  padding: 20px;
+}
+
+.auth-container {
+  width: 100%;
+  max-width: 400px;
+}
+
+/* Enhanced auth form container */
+.auth-form-container {
+  background: white;
+  border-radius: 12px;
+  padding: 32px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+  border: 1px solid #e0e0e0;
+}
+
+/* Responsive enhancements */
+@media (max-width: 480px) {
+  .auth-form-container {
+    padding: 24px 20px;
+    margin: 0 16px;
+  }
+  
+  .verification-help {
+    padding: 12px;
+  }
+  
+  .success-message,
+  .error-message {
+    padding: 12px;
+    font-size: 13px;
+  }
+}
+
+/* Google Account Linking Styles */
+
+.google-linking-container {
+  background: white;
+  border-radius: 12px;
+  padding: 24px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  margin-bottom: 24px;
+}
+
+.section-header h3 {
+  margin: 0 0 8px 0;
+  color: #333;
+  font-size: 20px;
+  font-weight: 600;
+}
+
+.section-header p {
+  margin: 0 0 20px 0;
+  color: #666;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+/* Status Indicators */
+.status-indicator {
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+  padding: 20px;
+  border-radius: 8px;
+  margin-bottom: 20px;
+}
+
+.status-indicator.linked {
+  background: #e8f5e8;
+  border: 1px solid #c8e6c9;
+}
+
+.status-indicator.unlinked {
+  background: #f5f5f5;
+  border: 1px solid #e0e0e0;
+}
+
+.status-icon {
+  font-size: 24px;
+  line-height: 1;
+  margin-top: 2px;
+}
+
+.status-info h4 {
+  margin: 0 0 8px 0;
+  color: #333;
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.status-info p {
+  margin: 0;
+  color: #666;
+  font-size: 14px;
+  line-height: 1.4;
+}
+
+/* Google Account Info */
+.google-account-info {
+  background: white;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  padding: 16px;
+  margin: 16px 0;
+}
+
+.account-details {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.google-avatar {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  border: 2px solid #e0e0e0;
+}
+
+.account-text p {
+  margin: 4px 0;
+  font-size: 14px;
+  color: #333;
+}
+
+.account-text strong {
+  color: #555;
+}
+
+/* Benefits List */
+.benefits-list {
+  margin: 16px 0;
+}
+
+.benefits-list h5 {
+  margin: 0 0 12px 0;
+  color: #333;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.benefits-list ul {
+  margin: 0;
+  padding-left: 0;
+  list-style: none;
+}
+
+.benefits-list li {
+  padding: 6px 0;
+  font-size: 14px;
+  color: #555;
+  line-height: 1.4;
+}
+
+/* Action Buttons */
+.account-actions {
+  margin-top: 20px;
+}
+
+.link-btn {
+  background: #4285f4;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  padding: 12px 20px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.link-btn:hover:not(:disabled) {
+  background: #3367d6;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(66, 133, 244, 0.3);
+}
+
+.link-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+.unlink-btn {
+  background: #dc3545;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  padding: 10px 16px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.unlink-btn:hover:not(:disabled) {
+  background: #c82333;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(220, 53, 69, 0.3);
+}
+
+.unlink-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+/* Google Button Content */
+.google-btn-content {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.google-icon {
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
+}
+
+/* Button Loading State */
+.btn-loading {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.btn-loading .spinner {
+  width: 16px;
+  height: 16px;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-top: 2px solid white;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* Security Note */
+.security-note {
+  background: #f8f9fa;
+  border: 1px solid #e9ecef;
+  border-radius: 8px;
+  padding: 16px;
+  margin-top: 24px;
+}
+
+.security-note h5 {
+  margin: 0 0 12px 0;
+  color: #333;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.security-note ul {
+  margin: 0;
+  padding-left: 16px;
+}
+
+.security-note li {
+  font-size: 13px;
+  color: #666;
+  line-height: 1.4;
+  margin-bottom: 6px;
+}
+
+/* Message Styles */
+.success-message {
+  background: #d4edda;
+  border: 1px solid #c3e6cb;
+  border-radius: 6px;
+  padding: 12px 16px;
+  margin-bottom: 16px;
+  color: #155724;
+  font-size: 14px;
+  line-height: 1.4;
+}
+
+.error-message {
+  background: #f8d7da;
+  border: 1px solid #f5c6cb;
+  border-radius: 6px;
+  padding: 12px 16px;
+  margin-bottom: 16px;
+  color: #721c24;
+  font-size: 14px;
+  line-height: 1.4;
+}
+
+.status-message {
+  background: #d1ecf1;
+  border: 1px solid #bee5eb;
+  border-radius: 6px;
+  padding: 12px 16px;
+  margin-bottom: 16px;
+  color: #0c5460;
+  font-size: 14px;
+}
+
+/* Auth Form Enhancements */
+.auth-subtitle {
+  text-align: center;
+  color: #666;
+  font-size: 14px;
+  margin-bottom: 24px;
+  line-height: 1.4;
+}
+
+.signup-benefits {
+  margin-top: 24px;
+  padding-top: 20px;
+  border-top: 1px solid #e0e0e0;
+}
+
+.signup-benefits h4 {
+  margin: 0 0 12px 0;
+  color: #333;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.signup-benefits ul {
+  margin: 0;
+  padding-left: 0;
+  list-style: none;
+}
+
+.signup-benefits li {
+  padding: 4px 0;
+  font-size: 13px;
+  color: #666;
+  line-height: 1.3;
+}
+
+/* Email Verification Styles */
+.verification-help {
+  margin-top: 24px;
+  padding: 16px;
+  background: #f8f9fa;
+  border: 1px solid #e9ecef;
+  border-radius: 8px;
+}
+
+.verification-help h4 {
+  margin: 0 0 12px 0;
+  color: #333;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.verification-help ul {
+  margin: 0;
+  padding-left: 16px;
+}
+
+.verification-help li {
+  font-size: 13px;
+  color: #666;
+  line-height: 1.4;
+  margin-bottom: 6px;
+}
+
+/* Enhanced success message */
+.success-message pre {
+  white-space: pre-wrap;
+  font-family: inherit;
+  font-size: 14px;
+  line-height: 1.6;
+  margin: 0;
+}
+
+/* Auth info enhancements */
+.auth-info p {
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+}
+
+/* Small text warnings */
+small {
+  display: block;
+  margin-top: 4px;
+  font-size: 12px;
+  color: #666;
+  line-height: 1.3;
+}
+
+small:before {
+  content: '';
+  margin-right: 4px;
+}
+
+/* Verification required warning */
+.form-group small {
+  color: #f57c00;
+  font-weight: 500;
+}
+
+/* Enhanced error messages for verification */
+.error-message {
+  background: #ffebee;
+  border: 1px solid #ffcdd2;
+  border-radius: 6px;
+  padding: 12px 16px;
+  margin-bottom: 16px;
+  color: #c62828;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+/* Success message with verification info */
+.success-message {
+  background: #e8f5e8;
+  border: 1px solid #c8e6c9;
+  border-radius: 8px;
+  padding: 16px;
+  margin-bottom: 16px;
+  color: #2e7d32;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+/* Resend verification page styles */
+.auth-page {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #f5f5f5;
+  padding: 20px;
+}
+
+.auth-container {
+  width: 100%;
+  max-width: 400px;
+}
+
+/* Enhanced auth form container */
+.auth-form-container {
+  background: white;
+  border-radius: 12px;
+  padding: 32px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+  border: 1px solid #e0e0e0;
+}
+
+/* Responsive enhancements */
+@media (max-width: 480px) {
+  .auth-form-container {
+    padding: 24px 20px;
+    margin: 0 16px;
+  }
+  
+  .verification-help {
+    padding: 12px;
+  }
+  
+  .success-message,
+  .error-message {
+    padding: 12px;
+    font-size: 13px;
+  }
+}

@@ -1,8 +1,10 @@
+// components/parent/ParentSettings.js - Updated with Google Account Linking
 'use client';
 
 import { useState } from 'react';
 import { updateDoc, doc } from 'firebase/firestore';
 import { db } from '../../firebase/config';
+import GoogleAccountLinking from './GoogleAccountLinking'; // Import the new component
 
 export default function ParentSettings() {
   const [settings, setSettings] = useState({
@@ -34,7 +36,12 @@ export default function ParentSettings() {
 
   return (
     <div className="settings-container">
-      <h1>Parent Settings</h1>
+      <h1>Parent Account Settings</h1>
+      
+      {/* NEW: Google Account Linking Section */}
+      <section className="settings-section">
+        <GoogleAccountLinking />
+      </section>
       
       <section className="settings-section">
         <h2>Notifications</h2>
@@ -146,4 +153,4 @@ export default function ParentSettings() {
       </section>
     </div>
   );
-} 
+}

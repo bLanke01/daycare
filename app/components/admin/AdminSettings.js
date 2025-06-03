@@ -1,8 +1,10 @@
+// components/admin/AdminSettings.js - Updated with Google Account Linking
 'use client';
 
 import { useState } from 'react';
 import { updateDoc, doc } from 'firebase/firestore';
 import { db } from '../../firebase/config';
+import GoogleAccountLinking from './AdminGoogleAccountLinking'; // Use admin-specific component
 
 export default function AdminSettings() {
   const [settings, setSettings] = useState({
@@ -33,6 +35,11 @@ export default function AdminSettings() {
   return (
     <div className="settings-container">
       <h1>Admin Settings</h1>
+      
+      {/* NEW: Google Account Linking Section */}
+      <section className="settings-section">
+        <GoogleAccountLinking />
+      </section>
       
       <section className="settings-section">
         <h2>Notifications</h2>
@@ -96,6 +103,84 @@ export default function AdminSettings() {
           </p>
         </div>
       </section>
+
+      <section className="settings-section">
+        <h2>Security & Access</h2>
+        <div className="setting-item">
+          <label>
+            <input
+              type="checkbox"
+              checked={settings.requireTwoFactor}
+              onChange={(e) => handleSettingChange('requireTwoFactor', e.target.checked)}
+            />
+            Require Two-Factor Authentication
+          </label>
+          <p className="setting-description">
+            Enhance security by requiring two-factor authentication for admin accounts
+          </p>
+        </div>
+
+        <div className="setting-item">
+          <label>
+            <input
+              type="checkbox"
+              checked={settings.sessionTimeout}
+              onChange={(e) => handleSettingChange('sessionTimeout', e.target.checked)}
+            />
+            Auto-logout After Inactivity
+          </label>
+          <p className="setting-description">
+            Automatically log out admin users after 30 minutes of inactivity
+          </p>
+        </div>
+      </section>
+
+      <section className="settings-section">
+        <h2>Administrative Preferences</h2>
+        <div className="setting-item">
+          <label>
+            <input
+              type="checkbox"
+              checked={settings.showAdvancedFeatures}
+              onChange={(e) => handleSettingChange('showAdvancedFeatures', e.target.checked)}
+            />
+            Show Advanced Features
+          </label>
+          <p className="setting-description">
+            Display advanced administrative tools and options in the dashboard
+          </p>
+        </div>
+
+        <div className="setting-item">
+          <label>Default View for New Users</label>
+          <select
+            value={settings.defaultNewUserView}
+            onChange={(e) => handleSettingChange('defaultNewUserView', e.target.value)}
+          >
+            <option value="pending">Pending Approval</option>
+            <option value="approved">Auto-Approved</option>
+            <option value="review">Manual Review</option>
+          </select>
+          <p className="setting-description">
+            Set the default status for new parent registrations
+          </p>
+        </div>
+
+        <div className="setting-item">
+          <label>Backup Frequency</label>
+          <select
+            value={settings.backupFrequency}
+            onChange={(e) => handleSettingChange('backupFrequency', e.target.value)}
+          >
+            <option value="daily">Daily</option>
+            <option value="weekly">Weekly</option>
+            <option value="monthly">Monthly</option>
+          </select>
+          <p className="setting-description">
+            How often to automatically backup system data
+          </p>
+        </div>
+      </section>
     </div>
   );
-} 
+}

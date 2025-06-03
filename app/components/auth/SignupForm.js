@@ -1,10 +1,10 @@
-// Simplified SignupForm.js - Emergency Fix Version
+// components/auth/SignupForm.js - Enhanced with email notifications
 'use client';
 
 import { useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
-import { createUserWithEmailAndPassword } from 'firebase/auth';
+import { createUserWithEmailAndPassword, sendEmailVerification } from 'firebase/auth';
 import { doc, setDoc, getDoc, collection, getDocs } from 'firebase/firestore';
 import { auth, db } from '../../firebase/config';
 
@@ -34,6 +34,33 @@ const SignupForm = () => {
     });
   };
   
+  const sendWelcomeNotification = async (user, childData, accessCodeData) => {
+    try {
+      // Send Firebase email verification (acts as welcome email)
+      await sendEmailVerification(user, {
+        url: `${window.location.origin}/parent`, // Redirect after email verification
+        handleCodeInApp: false
+      });
+      
+      console.log('✅ Welcome email sent to:', user.email);
+      
+      // Optional: Store email notification in Firestore for tracking
+      await setDoc(doc(db, 'notifications', `${user.uid}_welcome`), {
+        type: 'welcome_email',
+        userId: user.uid,
+        email: user.email,
+        sentAt: new Date().toISOString(),
+        childName: childData ? `${childData.firstName} ${childData.lastName}` : 'Unknown',
+        accessCode: accessCodeData?.code || 'Unknown'
+      });
+      
+      return true;
+    } catch (error) {
+      console.error('⚠️ Could not send welcome email:', error);
+      return false;
+    }
+  };
+  
   const handleSubmit = async (e) => {
     e.preventDefault();
     
@@ -58,17 +85,15 @@ const SignupForm = () => {
       setDebugInfo('Starting registration...');
       
       const trimmedCode = formData.accessCode.trim().toUpperCase();
-      console.log('🚀 Starting simplified registration with code:', trimmedCode);
+      console.log('🚀 Starting registration with code:', trimmedCode);
       
-      // Step 1: Create Firebase Auth User FIRST
-      setDebugInfo('Creating Firebase Auth user...');
-      console.log('📝 Creating auth user for:', formData.email);
-      
+      // Step 1: Create Firebase Auth User
+      setDebugInfo('Creating your account...');
       const userCredential = await createUserWithEmailAndPassword(auth, formData.email, formData.password);
       const user = userCredential.user;
       
       console.log('✅ Auth user created:', user.uid);
-      setDebugInfo('Auth user created successfully. Creating profile...');
+      setDebugInfo('Account created! Setting up your profile...');
       
       // Step 2: Create User Profile in Firestore
       const userDocData = {
@@ -78,119 +103,120 @@ const SignupForm = () => {
         lastName: formData.lastName,
         role: 'parent',
         accessCode: trimmedCode,
+        signInMethods: ['password'], // Track available sign-in methods
+        googleLinked: false, // Not linked yet - can be done later
+        emailVerified: false, // Will be true after they verify email
         createdAt: new Date().toISOString(),
-        registrationCompleted: true
+        registrationCompleted: true,
+        accountSettings: {
+          emailNotifications: true,
+          smsNotifications: false,
+          dailyUpdates: true,
+          weeklyReports: true
+        }
       };
       
-      console.log('💾 Saving user profile to Firestore...');
       await setDoc(doc(db, 'users', user.uid), userDocData);
       console.log('✅ User profile saved');
-      setDebugInfo('User profile created. Looking for access code...');
+      setDebugInfo('Profile created! Looking for your child...');
       
-      // Step 3: Find Access Code (Simple approach)
-      console.log('🔍 Looking for access code:', trimmedCode);
-      let foundAccessCode = false;
+      // Step 3: Find and Link Child (if access code valid)
+      let childData = null;
       let accessCodeData = null;
       
       try {
-        // Try to get access code document directly
-        const accessCodeDoc = await getDoc(doc(db, 'accessCodes', trimmedCode));
+        // Search for access code
+        const allAccessCodes = await getDocs(collection(db, 'accessCodes'));
+        let foundAccessCode = false;
         
-        if (accessCodeDoc.exists()) {
-          accessCodeData = accessCodeDoc.data();
-          foundAccessCode = true;
-          console.log('✅ Found access code document:', accessCodeData);
-        } else {
-          // Search through all access codes
-          console.log('🔍 Access code not found by ID, searching all...');
-          const allAccessCodes = await getDocs(collection(db, 'accessCodes'));
+        allAccessCodes.forEach((doc) => {
+          const data = doc.data();
+          if (data.code === trimmedCode && !data.used) {
+            accessCodeData = { id: doc.id, ...data };
+            foundAccessCode = true;
+          }
+        });
+        
+        if (foundAccessCode && accessCodeData.childId) {
+          // Link child to parent
+          const childDoc = await getDoc(doc(db, 'children', accessCodeData.childId));
           
-          allAccessCodes.forEach((doc) => {
-            const data = doc.data();
-            if (data.code === trimmedCode) {
-              accessCodeData = data;
-              foundAccessCode = true;
-              console.log('✅ Found access code in search:', data);
-            }
-          });
-        }
-      } catch (accessCodeError) {
-        console.warn('⚠️ Error searching for access code:', accessCodeError);
-        setDebugInfo('Warning: Could not verify access code, but continuing...');
-      }
-      
-      if (!foundAccessCode) {
-        console.log('⚠️ Access code not found, but user account was created');
-        setDebugInfo('Access code not found, but account was created successfully.');
-      } else {
-        setDebugInfo('Access code found! Looking for child...');
-        
-        // Step 4: Find and Link Child (Simple approach)
-        if (accessCodeData.childId) {
-          try {
-            console.log('👶 Attempting to link child:', accessCodeData.childId);
+          if (childDoc.exists()) {
+            childData = childDoc.data();
             
-            const childDoc = await getDoc(doc(db, 'children', accessCodeData.childId));
+            // Update child with parent info
+            await setDoc(doc(db, 'children', accessCodeData.childId), {
+              ...childData,
+              parentId: user.uid,
+              parentRegistered: true,
+              parentRegisteredAt: new Date().toISOString(),
+              parentFirstName: formData.firstName,
+              parentLastName: formData.lastName,
+              parentEmail: formData.email
+            }, { merge: true });
             
-            if (childDoc.exists()) {
-              // Update child with parent info
-              await setDoc(doc(db, 'children', accessCodeData.childId), {
-                ...childDoc.data(),
-                parentId: user.uid,
-                parentRegistered: true,
-                parentRegisteredAt: new Date().toISOString(),
-                parentFirstName: formData.firstName,
-                parentLastName: formData.lastName
-              }, { merge: true });
-              
-              console.log('✅ Child linked successfully');
-              setDebugInfo('Child linked successfully!');
-            }
-          } catch (childLinkError) {
-            console.warn('⚠️ Could not link child:', childLinkError);
-            setDebugInfo('Child linking failed, but account was created.');
+            // Update access code as used
+            await setDoc(doc(db, 'accessCodes', accessCodeData.id), {
+              ...accessCodeData,
+              used: true,
+              usesLeft: 0,
+              parentId: user.uid,
+              usedAt: new Date().toISOString()
+            }, { merge: true });
+            
+            console.log('✅ Child linked successfully');
+            setDebugInfo('Child linked! Sending welcome email...');
           }
         }
-        
-        // Step 5: Mark access code as used
-        try {
-          await setDoc(doc(db, 'accessCodes', trimmedCode), {
-            ...accessCodeData,
-            used: true,
-            usesLeft: 0,
-            parentId: user.uid,
-            usedAt: new Date().toISOString()
-          }, { merge: true });
-          
-          console.log('✅ Access code marked as used');
-        } catch (accessUpdateError) {
-          console.warn('⚠️ Could not update access code:', accessUpdateError);
-        }
+      } catch (linkError) {
+        console.warn('⚠️ Could not process access code:', linkError);
+        setDebugInfo('Access code verification had issues, but account was created.');
       }
       
-      // Success!
+      // Step 4: Send Welcome Email
+      setDebugInfo('Sending welcome email...');
+      const emailSent = await sendWelcomeNotification(user, childData, accessCodeData);
+      
+      // Step 5: Success!
+      const childName = childData ? `${childData.firstName} ${childData.lastName}` : 'your child';
+      const emailStatus = emailSent ? 
+        '\n📧 IMPORTANT: A verification email has been sent to your inbox!' : 
+        '\n⚠️ Verification email could not be sent, but your account was created.';
+        
       setSuccessMessage(
         `🎉 Account created successfully!\n\n` +
         `Welcome ${formData.firstName} ${formData.lastName}!\n\n` +
-        `You can now log in to your parent dashboard.\n\n` +
-        `Redirecting in 3 seconds...`
+        `✅ Your account has been created\n` +
+        `👶 Child: ${childName}\n` +
+        `📧 Email: ${formData.email}\n` +
+        `🔑 Access code: ${trimmedCode}${emailStatus}\n\n` +
+        `🚨 NEXT STEP: VERIFY YOUR EMAIL\n` +
+        `📬 Check your inbox (and spam folder) for a verification email\n` +
+        `🔗 Click the verification link in the email\n` +
+        `🚫 You CANNOT log in until your email is verified\n\n` +
+        `After verification, you can:\n` +
+        `• Log in to your parent dashboard\n` +
+        `• View your child's activities\n` +
+        `• Link your Google account (optional)\n\n` +
+        `Redirecting to login in 8 seconds...`
       );
       
       setTimeout(() => {
         router.push('/auth/login?type=parent');
-      }, 3000);
+      }, 8000);
       
     } catch (err) {
       console.error('❌ Registration error:', err);
       setError(`Registration failed: ${err.message}`);
       setDebugInfo(`Error: ${err.message}`);
       
-      // If it's a permission error, provide specific guidance
-      if (err.message.includes('insufficient permissions') || err.message.includes('Missing or insufficient permissions')) {
-        setError(
-          'Permission Error: There seems to be a Firestore security rules issue. ' +
-          'Please check that the Firestore rules are set to allow authenticated users to read/write.'
-        );
+      // Provide specific error messages
+      if (err.code === 'auth/email-already-in-use') {
+        setError('This email is already registered. Try logging in instead.');
+      } else if (err.code === 'auth/weak-password') {
+        setError('Password is too weak. Please use at least 6 characters with numbers and letters.');
+      } else if (err.code === 'auth/invalid-email') {
+        setError('Please enter a valid email address.');
       }
     } finally {
       setLoading(false);
@@ -231,6 +257,7 @@ const SignupForm = () => {
       </div>
       
       <h2 className="auth-title">Parent Sign Up</h2>
+      <p className="auth-subtitle">Create your account to access your child's daycare information</p>
       
       {error && (
         <div className="error-message">
@@ -251,13 +278,7 @@ const SignupForm = () => {
       )}
       
       {debugInfo && !error && !successMessage && (
-        <div style={{ 
-          background: '#e3f2fd', 
-          padding: '0.75rem', 
-          borderRadius: '4px', 
-          marginBottom: '1rem',
-          fontSize: '0.9rem'
-        }}>
+        <div className="status-message">
           Status: {debugInfo}
         </div>
       )}
@@ -293,6 +314,7 @@ const SignupForm = () => {
                 required
                 className="auth-input"
                 disabled={loading}
+                placeholder="Your first name"
               />
             </div>
             
@@ -307,6 +329,7 @@ const SignupForm = () => {
                 required
                 className="auth-input"
                 disabled={loading}
+                placeholder="Your last name"
               />
             </div>
           </div>
@@ -322,7 +345,9 @@ const SignupForm = () => {
               required
               className="auth-input"
               disabled={loading}
+              placeholder="Enter your email address"
             />
+            <small>⚠️ You'll need to verify this email before you can log in</small>
           </div>
           
           <div className="form-group">
@@ -337,6 +362,7 @@ const SignupForm = () => {
               className="auth-input"
               disabled={loading}
               minLength="6"
+              placeholder="Create a secure password"
             />
           </div>
           
@@ -351,6 +377,7 @@ const SignupForm = () => {
               required
               className="auth-input"
               disabled={loading}
+              placeholder="Confirm your password"
             />
           </div>
           
@@ -359,16 +386,33 @@ const SignupForm = () => {
             className="submit-btn"
             disabled={loading}
           >
-            {loading ? 'Creating Account...' : 'Create Parent Account'}
+            {loading ? (
+              <div className="btn-loading">
+                <div className="spinner"></div>
+                <span>Creating Your Account...</span>
+              </div>
+            ) : (
+              'Create Parent Account'
+            )}
           </button>
         </form>
       )}
 
-      <div className="auth-redirect">
+      <div className="auth-footer">
         <p>Already have an account?</p>
-        <Link href={`/auth/login?type=parent`}>
+        <Link href={`/auth/login?type=parent`} className="auth-link">
           Log in instead
         </Link>
+        
+        <div className="signup-benefits">
+          <h4>After creating your account, you can:</h4>
+          <ul>
+            <li>📱 View your child's daily activities</li>
+            <li>📅 Check schedules and events</li>
+            <li>💬 Message daycare staff</li>
+            <li>🔗 Link your Google account for easy login (optional)</li>
+          </ul>
+        </div>
       </div>
     </div>
   );
