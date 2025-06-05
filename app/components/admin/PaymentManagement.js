@@ -1,9 +1,10 @@
-// components/admin/PaymentManagement.js
+// components/admin/PaymentManagement.js - Updated with notification integration
 'use client';
 
 import { useState, useEffect } from 'react';
-import { collection, query, getDocs, doc, updateDoc, addDoc, deleteDoc, where } from 'firebase/firestore';
+import { collection, query, getDocs, doc, updateDoc, addDoc, deleteDoc, where, getDoc } from 'firebase/firestore';
 import { db } from '../../firebase/config';
+import { notificationService } from '../../services/NotificationService';
 
 export default function PaymentManagement() {
   const [parents, setParents] = useState([]);
@@ -22,6 +23,10 @@ export default function PaymentManagement() {
     dueDate: new Date().toISOString().split('T')[0],
     notes: ''
   });
+
+  // Notification states
+  const [sendingNotifications, setSendingNotifications] = useState(false);
+  const [notificationStatus, setNotificationStatus] = useState('');
 
   useEffect(() => {
     fetchParents();
@@ -58,24 +63,101 @@ export default function PaymentManagement() {
     }
   };
 
+  // Send notification for new invoice
+  const sendInvoiceNotification = async (invoiceData, parentData) => {
+    try {
+      setSendingNotifications(true);
+      setNotificationStatus('📧 Sending invoice notification to parent...');
+      
+      console.log('🔍 Sending notification with invoice data:', {
+        id: invoiceData.id,
+        invoiceNo: invoiceData.invoiceNo,
+        totalAmount: invoiceData.totalAmount,
+        parentName: invoiceData.parentName,
+        parentEmail: parentData.email
+      });
+      
+      await notificationService.notifyParentNewInvoice(invoiceData, parentData);
+      
+      setNotificationStatus('✅ Invoice notification sent successfully!');
+      
+      setTimeout(() => {
+        setNotificationStatus('');
+        setSendingNotifications(false);
+      }, 3000);
+    } catch (error) {
+      console.error('❌ Error sending invoice notification:', error);
+      setNotificationStatus(`❌ Error sending notification: ${error.message}`);
+      setTimeout(() => {
+        setNotificationStatus('');
+        setSendingNotifications(false);
+      }, 5000);
+    }
+  };
+
+  // Send notification for paid invoice
+  const sendPaymentConfirmationNotification = async (invoiceData, parentData) => {
+    try {
+      setSendingNotifications(true);
+      setNotificationStatus('📧 Sending payment confirmation to parent...');
+      
+      console.log('🔍 Sending payment confirmation with data:', {
+        id: invoiceData.id,
+        invoiceNo: invoiceData.invoiceNo,
+        totalAmount: invoiceData.totalAmount,
+        parentName: invoiceData.parentName,
+        parentEmail: parentData.email,
+        paidAt: invoiceData.paidAt
+      });
+      
+      await notificationService.notifyParentInvoicePaid(invoiceData, parentData);
+      
+      setNotificationStatus('✅ Payment confirmation sent successfully!');
+      
+      setTimeout(() => {
+        setNotificationStatus('');
+        setSendingNotifications(false);
+      }, 3000);
+    } catch (error) {
+      console.error('❌ Error sending payment confirmation:', error);
+      setNotificationStatus(`❌ Error sending confirmation: ${error.message}`);
+      setTimeout(() => {
+        setNotificationStatus('');
+        setSendingNotifications(false);
+      }, 5000);
+    }
+  };
+
   const handleInvoiceSubmit = async (e) => {
     e.preventDefault();
     if (!selectedParent) return;
 
     try {
+      const subTotal = invoiceData.items.reduce((sum, item) => sum + (item.total || 0), 0);
+      const totalAmount = subTotal; // For now, total = subtotal (no taxes/fees)
+
       const invoice = {
         ...invoiceData,
         parentId: selectedParent.id,
-        parentName: selectedParent.name || selectedParent.email,
+        parentName: selectedParent.name || `${selectedParent.firstName} ${selectedParent.lastName}` || selectedParent.email,
         status: 'pending',
         createdAt: new Date().toISOString(),
         invoiceNo: `INV-${Date.now()}`,
-        subTotal: invoiceData.items.reduce((sum, item) => sum + item.total, 0),
-        totalAmount: invoiceData.items.reduce((sum, item) => sum + item.total, 0),
-        paymentEmail: '[Your E-transfer Email]' // Replace with actual admin e-transfer email
+        subTotal: subTotal,
+        totalAmount: totalAmount,
+        paymentEmail: 'payments@daycare.com' // Replace with actual admin e-transfer email
       };
 
-      await addDoc(collection(db, 'invoices'), invoice);
+      console.log('🔍 Creating invoice with data:', {
+        totalAmount: invoice.totalAmount,
+        subTotal: invoice.subTotal,
+        itemsCount: invoice.items?.length,
+        parentName: invoice.parentName
+      });
+
+      const docRef = await addDoc(collection(db, 'invoices'), invoice);
+      const newInvoice = { ...invoice, id: docRef.id };
+      
       setShowInvoiceForm(false);
       setSelectedParent(null);
       setInvoiceData({
@@ -83,9 +165,16 @@ export default function PaymentManagement() {
         dueDate: new Date().toISOString().split('T')[0],
         notes: ''
       });
-      fetchPayments();
+      
+      await fetchPayments();
+      
+      // Send notification to parent
+      await sendInvoiceNotification(newInvoice, selectedParent);
+      
     } catch (error) {
       console.error('Error creating invoice:', error);
+      setNotificationStatus('❌ Error creating invoice');
+      setTimeout(() => setNotificationStatus(''), 5000);
     }
   };
 
@@ -134,8 +223,12 @@ export default function PaymentManagement() {
       fetchPayments();
       setIsEditing(false);
       setSelectedPayment(null);
+      setNotificationStatus('📝 Invoice updated successfully');
+      setTimeout(() => setNotificationStatus(''), 3000);
     } catch (error) {
       console.error('Error updating invoice:', error);
+      setNotificationStatus('❌ Error updating invoice');
+      setTimeout(() => setNotificationStatus(''), 5000);
     }
   };
 
@@ -146,28 +239,73 @@ export default function PaymentManagement() {
       await deleteDoc(doc(db, 'invoices', paymentId));
       fetchPayments();
       setSelectedPayment(null);
+      setNotificationStatus('🗑️ Invoice deleted successfully');
+      setTimeout(() => setNotificationStatus(''), 3000);
     } catch (error) {
       console.error('Error deleting invoice:', error);
+      setNotificationStatus('❌ Error deleting invoice');
+      setTimeout(() => setNotificationStatus(''), 5000);
     }
   };
 
   const markAsPaid = async (paymentId) => {
     try {
       const paymentRef = doc(db, 'invoices', paymentId);
-      await updateDoc(paymentRef, {
+      const updatedInvoice = {
         status: 'paid',
         paidAt: new Date().toISOString()
+      };
+      
+      await updateDoc(paymentRef, updatedInvoice);
+      
+      // Get the updated invoice data and parent info for notification
+      const invoiceDoc = await getDoc(paymentRef);
+      if (!invoiceDoc.exists()) {
+        throw new Error('Invoice not found after update');
+      }
+      
+      const invoiceData = { id: invoiceDoc.id, ...invoiceDoc.data(), ...updatedInvoice };
+      
+      console.log('🔍 Invoice marked as paid:', {
+        id: invoiceData.id,
+        invoiceNo: invoiceData.invoiceNo,
+        totalAmount: invoiceData.totalAmount,
+        parentId: invoiceData.parentId
       });
-      fetchPayments();
+      
+      // Get parent data
+      const parentDoc = await getDoc(doc(db, 'users', invoiceData.parentId));
+      if (parentDoc.exists()) {
+        const parentData = parentDoc.data();
+        
+        console.log('🔍 Found parent for notification:', {
+          uid: parentData.uid,
+          email: parentData.email,
+          name: parentData.firstName || parentData.name
+        });
+        
+        // Send payment confirmation notification
+        await sendPaymentConfirmationNotification(invoiceData, parentData);
+      } else {
+        console.warn('⚠️ Parent not found for invoice:', invoiceData.parentId);
+        setNotificationStatus('⚠️ Payment marked as paid, but could not notify parent (parent not found)');
+        setTimeout(() => setNotificationStatus(''), 5000);
+      }
+      
+      await fetchPayments();
       setSelectedPayment(null);
+      
     } catch (error) {
       console.error('Error marking payment as paid:', error);
+      setNotificationStatus(`❌ Error processing payment: ${error.message}`);
+      setTimeout(() => setNotificationStatus(''), 5000);
     }
   };
 
   const handleExport = () => {
-    // TODO: Implement export functionality
     console.log('Exporting data...');
+    setNotificationStatus('📊 Export feature coming soon');
+    setTimeout(() => setNotificationStatus(''), 3000);
   };
 
   const handleRowSelect = (paymentId) => {
@@ -197,6 +335,14 @@ export default function PaymentManagement() {
       <div className="invoice-form">
         <h3>{isEditing ? 'Edit Invoice' : 'Create New Invoice'}</h3>
         
+        {/* Notification Status */}
+        {notificationStatus && (
+          <div className={`notification-status ${sendingNotifications ? 'processing' : 'success'}`}>
+            {sendingNotifications && <div className="notification-spinner"></div>}
+            {notificationStatus}
+          </div>
+        )}
+        
         <div className="parent-selector">
           <label>Select Parent:</label>
           <select 
@@ -207,7 +353,7 @@ export default function PaymentManagement() {
             <option value="">Select a parent...</option>
             {parents.map(parent => (
               <option key={parent.id} value={parent.id}>
-                {parent.name || parent.email}
+                {parent.name || `${parent.firstName} ${parent.lastName}` || parent.email}
               </option>
             ))}
           </select>
@@ -277,8 +423,37 @@ export default function PaymentManagement() {
             </div>
           </div>
 
+          {/* Notification Info for New Invoices */}
+          {!isEditing && selectedParent && (
+            <div className="notification-info">
+              <h4>📧 Email Notification</h4>
+              <p>When you create this invoice, an email notification will be automatically sent to:</p>
+              <ul>
+                <li>✅ <strong>{selectedParent.email}</strong> (if they have invoice notifications enabled)</li>
+              </ul>
+              <p>The email will include:</p>
+              <ul>
+                <li>📄 Complete invoice details</li>
+                <li>💳 Payment instructions with e-transfer details</li>
+                <li>🔗 Direct link to view the invoice online</li>
+              </ul>
+            </div>
+          )}
+
           <div className="form-actions">
-            <button type="submit">{isEditing ? 'Update Invoice' : 'Send Invoice'}</button>
+            <button 
+              type="submit"
+              disabled={sendingNotifications}
+            >
+              {sendingNotifications ? (
+                <>
+                  <div className="btn-spinner"></div>
+                  {isEditing ? 'Updating...' : 'Creating & Notifying...'}
+                </>
+              ) : (
+                isEditing ? 'Update Invoice' : 'Send Invoice'
+              )}
+            </button>
             <button 
               type="button" 
               onClick={() => {
@@ -286,6 +461,7 @@ export default function PaymentManagement() {
                 setIsEditing(false);
                 setSelectedPayment(null);
               }}
+              disabled={sendingNotifications}
             >
               Cancel
             </button>
@@ -306,6 +482,14 @@ export default function PaymentManagement() {
           Create Invoice
         </button>
       </div>
+
+      {/* Notification Status */}
+      {notificationStatus && (
+        <div className={`notification-status ${sendingNotifications ? 'processing' : 'success'}`}>
+          {sendingNotifications && <div className="notification-spinner"></div>}
+          {notificationStatus}
+        </div>
+      )}
 
       <div className="payments-overview">
         <h2>Payments overview</h2>
@@ -429,6 +613,17 @@ export default function PaymentManagement() {
                 <p><strong>Paid Date:</strong> {new Date(selectedPayment.paidAt).toLocaleString()}</p>
               )}
             </div>
+            
+            {/* Notification Info */}
+            <div className="notification-info-modal">
+              <h4>📧 Notification Status</h4>
+              {selectedPayment.status === 'pending' ? (
+                <p>✅ Parent was notified when this invoice was created</p>
+              ) : (
+                <p>✅ Parent was notified when payment was confirmed</p>
+              )}
+            </div>
+            
             <div className="modal-actions">
               {selectedPayment.status === 'pending' && (
                 <>
@@ -441,8 +636,9 @@ export default function PaymentManagement() {
                   <button 
                     className="mark-paid-btn"
                     onClick={() => markAsPaid(selectedPayment.id)}
+                    disabled={sendingNotifications}
                   >
-                    Mark as Paid
+                    {sendingNotifications ? 'Processing...' : 'Mark as Paid'}
                   </button>
                 </>
               )}

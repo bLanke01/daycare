@@ -1,4 +1,4 @@
-// components/admin/ScheduleCalendar.js
+// components/admin/ScheduleCalendar.js - Updated with notification integration
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -14,6 +14,7 @@ import {
   Timestamp 
 } from 'firebase/firestore';
 import { db } from '../../firebase/config';
+import { notificationService } from '../../services/NotificationService';
 
 const ScheduleCalendar = () => {
   // State for current date and events
@@ -73,6 +74,10 @@ const ScheduleCalendar = () => {
   // State for event details modal
   const [showEventDetails, setShowEventDetails] = useState(false);
   const [selectedEvent, setSelectedEvent] = useState(null);
+  
+  // State for notification processing
+  const [sendingNotifications, setSendingNotifications] = useState(false);
+  const [notificationStatus, setNotificationStatus] = useState('');
   
   // Get days in month
   const getDaysInMonth = (month, year) => {
@@ -156,6 +161,40 @@ const ScheduleCalendar = () => {
     });
   };
   
+  // Send notifications for new event
+  const sendEventNotifications = async (eventData) => {
+    try {
+      setSendingNotifications(true);
+      setNotificationStatus('📧 Sending notifications...');
+      
+      console.log('🔔 Starting notification process for event:', eventData.title);
+      
+      // Send notifications to admins
+      setNotificationStatus('📧 Notifying administrators...');
+      await notificationService.notifyAdminsNewEvent(eventData);
+      
+      // Send notifications to parents
+      setNotificationStatus('📧 Notifying parents...');
+      await notificationService.notifyParentsNewEvent(eventData);
+      
+      setNotificationStatus('✅ All notifications sent successfully!');
+      
+      // Clear status after a few seconds
+      setTimeout(() => {
+        setNotificationStatus('');
+        setSendingNotifications(false);
+      }, 3000);
+      
+    } catch (error) {
+      console.error('❌ Error sending notifications:', error);
+      setNotificationStatus('❌ Error sending some notifications');
+      setTimeout(() => {
+        setNotificationStatus('');
+        setSendingNotifications(false);
+      }, 5000);
+    }
+  };
+  
   // Handle form submission
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -184,10 +223,17 @@ const ScheduleCalendar = () => {
             ? { ...eventData, id: newEvent.id, date: dateObj } 
             : event
         ));
+        
+        setNotificationStatus('📝 Event updated successfully!');
       } else {
         // Add new event
         const docRef = await addDoc(collection(db, 'events'), eventData);
-        setEvents([...events, { ...eventData, id: docRef.id, date: dateObj }]);
+        const newEventWithId = { ...eventData, id: docRef.id, date: dateObj };
+        
+        setEvents([...events, newEventWithId]);
+        
+        // Send notifications for new events only
+        await sendEventNotifications(newEventWithId);
       }
       
       setShowEventForm(false);
@@ -210,6 +256,8 @@ const ScheduleCalendar = () => {
       await deleteDoc(doc(db, 'events', eventId));
       setEvents(events.filter(event => event.id !== eventId));
       setShowEventDetails(false);
+      setNotificationStatus('🗑️ Event deleted successfully');
+      setTimeout(() => setNotificationStatus(''), 3000);
     } catch (error) {
       console.error('Error deleting event:', error);
       alert('Error deleting event. Please try again.');
@@ -251,6 +299,14 @@ const ScheduleCalendar = () => {
           Add New Event
         </button>
       </div>
+      
+      {/* Notification Status */}
+      {notificationStatus && (
+        <div className={`notification-status ${sendingNotifications ? 'processing' : 'success'}`}>
+          {sendingNotifications && <div className="notification-spinner"></div>}
+          {notificationStatus}
+        </div>
+      )}
       
       <div className="calendar-container">
         <div className="calendar-navigation">
@@ -392,14 +448,39 @@ const ScheduleCalendar = () => {
                 ></textarea>
               </div>
               
+              {/* Notification Info */}
+              {!newEvent.id && (
+                <div className="notification-info">
+                  <h4>📧 Notifications</h4>
+                  <p>When you create this event, notifications will be automatically sent to:</p>
+                  <ul>
+                    <li>✅ All administrators (if they have event notifications enabled)</li>
+                    <li>✅ Parents in the selected group(s) (if they have event notifications enabled)</li>
+                  </ul>
+                  <p><small>Users can manage their notification preferences in Settings.</small></p>
+                </div>
+              )}
+              
               <div className="form-actions">
-                <button type="submit" className="submit-btn">
-                  {newEvent.id ? 'Save Changes' : 'Add Event'}
+                <button 
+                  type="submit" 
+                  className="submit-btn"
+                  disabled={sendingNotifications}
+                >
+                  {sendingNotifications ? (
+                    <>
+                      <div className="btn-spinner"></div>
+                      {newEvent.id ? 'Saving...' : 'Creating & Notifying...'}
+                    </>
+                  ) : (
+                    newEvent.id ? 'Save Changes' : 'Add Event'
+                  )}
                 </button>
                 <button 
                   type="button" 
                   className="cancel-btn"
                   onClick={() => setShowEventForm(false)}
+                  disabled={sendingNotifications}
                 >
                   Cancel
                 </button>
