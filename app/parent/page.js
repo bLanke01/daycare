@@ -345,114 +345,83 @@ export default function ParentDashboard() {
 
   if (loading) {
     return (
-      <div className="child-profile-container">
-        <div className="loading">Loading your children's information...</div>
-        {debugInfo && (
-          <div className="debug-info" style={{ 
-            background: '#f8f9fa', 
-            padding: '1rem', 
-            margin: '1rem 0', 
-            borderRadius: '4px',
-            fontSize: '0.9rem',
-            color: '#666'
-          }}>
-            {debugInfo}
-          </div>
-        )}
+      <div className="flex justify-center items-center min-h-screen">
+        <span className="loading loading-spinner loading-lg text-primary"></span>
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="child-profile-container">
-        <div className="error-message">{error}</div>
+      <div className="container mx-auto p-4">
+        <div className="alert alert-error shadow-lg">
+          <svg xmlns="http://www.w3.org/2000/svg" className="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+          <div>
+            <h3 className="font-bold">Error</h3>
+            <div className="text-sm">{error}</div>
+          </div>
+        </div>
         {debugInfo && (
-          <div className="debug-info" style={{ 
-            background: '#f8f9fa', 
-            padding: '1rem', 
-            margin: '1rem 0', 
-            borderRadius: '4px',
-            fontSize: '0.9rem',
-            color: '#666'
-          }}>
-            Debug Info: {debugInfo}
+          <div className="mt-4 p-4 bg-base-200 rounded-lg">
+            <p className="text-sm opacity-70">Debug Info: {debugInfo}</p>
           </div>
         )}
-        <div style={{ marginTop: '1rem' }}>
-          <p>If you just registered, please try refreshing the page in a few moments.</p>
-          <button 
-            onClick={() => window.location.reload()} 
-            style={{
-              background: '#007bff',
-              color: 'white',
-              border: 'none',
-              padding: '0.5rem 1rem',
-              borderRadius: '4px',
-              cursor: 'pointer',
-              marginTop: '0.5rem'
-            }}
-          >
-            Refresh Page
-          </button>
-        </div>
+        <button 
+          onClick={() => window.location.reload()}
+          className="btn btn-primary mt-4"
+        >
+          Refresh Page
+        </button>
       </div>
     );
   }
 
   if (children.length === 0) {
     return (
-      <div className="child-profile-container">
-        <h1>Welcome to Your Parent Dashboard</h1>
-        <div className="no-children">
-          <p>No children found in your account.</p>
-          <p>If you just completed registration, please wait a moment and refresh the page.</p>
-          <p>If the issue persists, please contact the daycare administration.</p>
-          {debugInfo && (
-            <div className="debug-info" style={{ 
-              background: '#f8f9fa', 
-              padding: '1rem', 
-              margin: '1rem 0', 
-              borderRadius: '4px',
-              fontSize: '0.9rem',
-              color: '#666'
-            }}>
-              Debug Info: {debugInfo}
+      <div className="container mx-auto p-4">
+        <h1 className="text-2xl font-bold mb-6">Welcome to Your Parent Dashboard</h1>
+        <div className="card bg-base-100 shadow-xl">
+          <div className="card-body">
+            <h2 className="card-title text-warning">No Children Found</h2>
+            <p>No children are currently linked to your account.</p>
+            <p>If you just completed registration, please wait a moment and refresh the page.</p>
+            <p>If the issue persists, please contact the daycare administration.</p>
+            {debugInfo && (
+              <div className="bg-base-200 p-4 rounded-lg mt-4">
+                <p className="text-sm opacity-70">Debug Info: {debugInfo}</p>
+              </div>
+            )}
+            <div className="card-actions justify-end mt-4">
+              <button 
+                onClick={() => window.location.reload()}
+                className="btn btn-primary"
+              >
+                🔄 Refresh Page
+              </button>
             </div>
-          )}
-          <button 
-            onClick={() => window.location.reload()} 
-            style={{
-              background: '#28a745',
-              color: 'white',
-              border: 'none',
-              padding: '0.75rem 1.5rem',
-              borderRadius: '4px',
-              cursor: 'pointer',
-              marginTop: '1rem'
-            }}
-          >
-            🔄 Refresh Page
-          </button>
+          </div>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="parent-dashboard">
-      <div className="dashboard-header">
-        <h1>Your Children's Dashboard</h1>
+    <div className="container mx-auto p-4">
+      <div className="flex flex-col md:flex-row justify-between items-center mb-6">
+        <h1 className="text-2xl font-bold">Your Children's Dashboard</h1>
         {children.length > 1 && (
-          <div className="child-selector">
-            <label>Viewing: </label>
+          <div className="form-control w-full md:w-auto mt-4 md:mt-0">
             <select 
+              className="select select-bordered w-full md:w-auto"
               value={selectedChild?.id || ''} 
               onChange={(e) => {
                 const child = children.find(c => c.id === e.target.value);
                 setSelectedChild(child);
               }}
             >
+              <option value="">Select a child</option>
               {children.map(child => (
                 <option key={child.id} value={child.id}>
                   {child.firstName} {child.lastName}
@@ -464,197 +433,235 @@ export default function ParentDashboard() {
       </div>
 
       {selectedChild && (
-        <div className="child-dashboard">
-          {/* Child Profile Section */}
-          <div className="profile-section">
-            <div className="child-card">
-              <div className="child-photo">
-                <div className="photo-placeholder">
+        <div className="grid gap-6">
+          {/* Child Profile Card */}
+          <div className="card bg-base-100 shadow-xl">
+            <div className="card-body">
+              <div className="flex flex-col md:flex-row gap-6">
+                <div className="flex-none w-32 h-32 rounded-full bg-base-200 flex items-center justify-center text-4xl">
                   {selectedChild.gender === 'Female' ? '👧' : '👦'}
                 </div>
-              </div>
-              <div className="child-info">
-                <h2>{selectedChild.firstName} {selectedChild.lastName}</h2>
-                <p>Age: {calculateAge(selectedChild.dateOfBirth)}</p>
-                <p>Group: {selectedChild.group}</p>
-                <p>Status: Active</p>
-              </div>
-            </div>
-
-            {/* Today's Summary */}
-            <div className="today-summary">
-              <h3>Today's Summary</h3>
-              <div className="summary-grid">
-                <div className="summary-item">
-                  <span className="summary-label">Attendance</span>
-                  <span className="summary-value">
-                    {childAttendance.length > 0 && 
-                     childAttendance[0].date.split('T')[0] === new Date().toISOString().split('T')[0] 
-                      ? childAttendance[0].status 
-                      : 'Not marked'}
-                  </span>
-                </div>
-                <div className="summary-item">
-                  <span className="summary-label">Meals Today</span>
-                  <span className="summary-value">
-                    {childMeals.filter(meal => 
-                      meal.date.split('T')[0] === new Date().toISOString().split('T')[0]
-                    ).length}
-                  </span>
-                </div>
-                <div className="summary-item">
-                  <span className="summary-label">Naps Today</span>
-                  <span className="summary-value">
-                    {childNaps.filter(nap => 
-                      nap.date.split('T')[0] === new Date().toISOString().split('T')[0]
-                    ).length}
-                  </span>
-                </div>
-                <div className="summary-item">
-                  <span className="summary-label">Activities Today</span>
-                  <span className="summary-value">
-                    {childActivities.filter(activity => 
-                      activity.date.split('T')[0] === new Date().toISOString().split('T')[0]
-                    ).length}
-                  </span>
+                <div>
+                  <h2 className="card-title text-2xl">{selectedChild.firstName} {selectedChild.lastName}</h2>
+                  <div className="grid grid-cols-2 gap-4 mt-4">
+                    <div>
+                      <p className="text-sm opacity-70">Age</p>
+                      <p className="font-semibold">{calculateAge(selectedChild.dateOfBirth)}</p>
+                    </div>
+                    <div>
+                      <p className="text-sm opacity-70">Group</p>
+                      <p className="font-semibold">{selectedChild.group || 'Not assigned'}</p>
+                    </div>
+                    <div>
+                      <p className="text-sm opacity-70">Status</p>
+                      <div className="badge badge-success">Active</div>
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
           </div>
 
-          {/* Dashboard Sections */}
-          <div className="dashboard-sections">
-            {/* Recent Activities */}
-            <div className="dashboard-section">
-              <h3>Recent Activities</h3>
-              <div className="section-content">
-                {childActivities.length === 0 ? (
-                  <p className="no-data">No activities recorded yet.</p>
-                ) : (
-                  <div className="activities-list">
-                    {childActivities.map(activity => (
-                      <div key={activity.id} className="activity-item">
-                        <div className="activity-header">
-                          <span className={`activity-type ${(activity.activityType || activity.type || 'other').toLowerCase()}`}>
+          {/* Today's Summary */}
+          <div className="card bg-base-100 shadow-xl">
+            <div className="card-body">
+              <h3 className="card-title">Today's Summary</h3>
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mt-4">
+                <div className="stat">
+                  <div className="stat-title">Attendance</div>
+                  <div className="stat-value text-lg">
+                    {childAttendance.length > 0 && 
+                     childAttendance[0].date.split('T')[0] === new Date().toISOString().split('T')[0] 
+                      ? childAttendance[0].status 
+                      : 'Not marked'}
+                  </div>
+                </div>
+                <div className="stat">
+                  <div className="stat-title">Meals Today</div>
+                  <div className="stat-value text-lg">
+                    {childMeals.filter(meal => 
+                      meal.date.split('T')[0] === new Date().toISOString().split('T')[0]
+                    ).length}
+                  </div>
+                </div>
+                <div className="stat">
+                  <div className="stat-title">Naps Today</div>
+                  <div className="stat-value text-lg">
+                    {childNaps.filter(nap => 
+                      nap.date.split('T')[0] === new Date().toISOString().split('T')[0]
+                    ).length}
+                  </div>
+                </div>
+                <div className="stat">
+                  <div className="stat-title">Activities Today</div>
+                  <div className="stat-value text-lg">
+                    {childActivities.filter(activity => 
+                      activity.date.split('T')[0] === new Date().toISOString().split('T')[0]
+                    ).length}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Recent Activities */}
+          <div className="card bg-base-100 shadow-xl">
+            <div className="card-body">
+              <h3 className="card-title">Recent Activities</h3>
+              {childActivities.length === 0 ? (
+                <div className="alert alert-info">
+                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" className="stroke-current shrink-0 w-6 h-6">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  <span>No activities recorded yet.</span>
+                </div>
+              ) : (
+                <div className="grid gap-4">
+                  {childActivities.map(activity => (
+                    <div key={activity.id} className="card bg-base-200">
+                      <div className="card-body">
+                        <div className="flex justify-between items-start">
+                          <div>
+                            <h4 className="font-bold">{activity.title}</h4>
+                            <p className="text-sm opacity-70">{new Date(activity.date).toLocaleDateString()}</p>
+                          </div>
+                          <div className="badge" data-type={activity.activityType || activity.type || 'other'}>
                             {activity.activityType || activity.type || 'Activity'}
-                          </span>
-                          <span className="activity-date">
-                            {new Date(activity.date).toLocaleDateString()}
-                          </span>
+                          </div>
                         </div>
-                        <h4 className="activity-title">{activity.title}</h4>
-                        <p className="activity-description">{activity.description}</p>
+                        <p>{activity.description}</p>
                         {activity.notes && (
-                          <p className="activity-notes">Notes: {activity.notes}</p>
+                          <p className="text-sm opacity-70 mt-2">Notes: {activity.notes}</p>
                         )}
                       </div>
-                    ))}
-                  </div>
-                )}
-              </div>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
+          </div>
 
-            {/* Attendance Summary */}
-            <div className="dashboard-section">
-              <h3>Recent Attendance</h3>
-              <div className="section-content">
-                {childAttendance.length === 0 ? (
-                  <p className="no-data">No attendance records yet.</p>
-                ) : (
-                  <div className="attendance-list">
-                    {childAttendance.map(record => (
-                      <div key={record.id} className="attendance-item">
-                        <div className="attendance-date">
-                          {new Date(record.date).toLocaleDateString()}
-                        </div>
-                        <div className="attendance-details">
-                          <span className={`status-badge ${record.status}`}>
-                            {record.status}
-                          </span>
-                          {record.arrivalTime && (
-                            <span className="time-info">
-                              In: {record.arrivalTime}
-                            </span>
-                          )}
-                          {record.departureTime && (
-                            <span className="time-info">
-                              Out: {record.departureTime}
-                            </span>
-                          )}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
+          {/* Recent Attendance */}
+          <div className="card bg-base-100 shadow-xl">
+            <div className="card-body">
+              <h3 className="card-title">Recent Attendance</h3>
+              {childAttendance.length === 0 ? (
+                <div className="alert alert-info">
+                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" className="stroke-current shrink-0 w-6 h-6">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  <span>No attendance records yet.</span>
+                </div>
+              ) : (
+                <div className="overflow-x-auto">
+                  <table className="table table-zebra w-full">
+                    <thead>
+                      <tr>
+                        <th>Date</th>
+                        <th>Status</th>
+                        <th>Arrival</th>
+                        <th>Departure</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {childAttendance.map(record => (
+                        <tr key={record.id}>
+                          <td>{new Date(record.date).toLocaleDateString()}</td>
+                          <td>
+                            <div className="badge" data-status={record.status}>
+                              {record.status}
+                            </div>
+                          </td>
+                          <td>{record.arrivalTime || '-'}</td>
+                          <td>{record.departureTime || '-'}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
             </div>
+          </div>
 
-            {/* Meals Summary */}
-            <div className="dashboard-section">
-              <h3>Recent Meals</h3>
-              <div className="section-content">
-                {childMeals.length === 0 ? (
-                  <p className="no-data">No meal records yet.</p>
-                ) : (
-                  <div className="meals-list">
-                    {childMeals.map(meal => (
-                      <div key={meal.id} className="meal-item">
-                        <div className="meal-header">
-                          <span className={`meal-type ${meal.mealType}`}>
-                            {meal.mealType.charAt(0).toUpperCase() + meal.mealType.slice(1)}
-                          </span>
-                          <span className="meal-date">
-                            {new Date(meal.date).toLocaleDateString()} at {meal.time}
-                          </span>
-                        </div>
-                        <div className="meal-details">
-                          <div className="food-items">
-                            {Array.isArray(meal.foodItems) ? 
-                              meal.foodItems.join(', ') : 
-                              meal.foodItems}
+          {/* Recent Meals */}
+          <div className="card bg-base-100 shadow-xl">
+            <div className="card-body">
+              <h3 className="card-title">Recent Meals</h3>
+              {childMeals.length === 0 ? (
+                <div className="alert alert-info">
+                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" className="stroke-current shrink-0 w-6 h-6">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  <span>No meal records yet.</span>
+                </div>
+              ) : (
+                <div className="grid gap-4">
+                  {childMeals.map(meal => (
+                    <div key={meal.id} className="card bg-base-200">
+                      <div className="card-body">
+                        <div className="flex justify-between items-start">
+                          <div>
+                            <h4 className="font-bold capitalize">{meal.mealType}</h4>
+                            <p className="text-sm opacity-70">
+                              {new Date(meal.date).toLocaleDateString()} at {meal.time}
+                            </p>
                           </div>
-                          <span className={`amount-eaten ${meal.amountEaten}`}>
-                            Ate: {meal.amountEaten}
-                          </span>
+                          <div className="badge" data-amount={meal.amountEaten}>
+                            {meal.amountEaten}
+                          </div>
                         </div>
+                        <p className="mt-2">
+                          {Array.isArray(meal.foodItems) ? 
+                            meal.foodItems.join(', ') : 
+                            meal.foodItems}
+                        </p>
                       </div>
-                    ))}
-                  </div>
-                )}
-              </div>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
+          </div>
 
-            {/* Naps Summary */}
-            <div className="dashboard-section">
-              <h3>Recent Naps</h3>
-              <div className="section-content">
-                {childNaps.length === 0 ? (
-                  <p className="no-data">No nap records yet.</p>
-                ) : (
-                  <div className="naps-list">
-                    {childNaps.map(nap => (
-                      <div key={nap.id} className="nap-item">
-                        <div className="nap-header">
-                          <span className="nap-date">
-                            {new Date(nap.date).toLocaleDateString()}
-                          </span>
-                          <span className={`nap-quality ${nap.quality}`}>
-                            {nap.quality} sleep
-                          </span>
-                        </div>
-                        <div className="nap-details">
-                          <span className="nap-time">
-                            {nap.startTime} - {nap.endTime}
-                          </span>
-                          <span className="nap-duration">
-                            ({formatDuration(nap.duration)})
-                          </span>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
+          {/* Recent Naps */}
+          <div className="card bg-base-100 shadow-xl">
+            <div className="card-body">
+              <h3 className="card-title">Recent Naps</h3>
+              {childNaps.length === 0 ? (
+                <div className="alert alert-info">
+                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" className="stroke-current shrink-0 w-6 h-6">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  <span>No nap records yet.</span>
+                </div>
+              ) : (
+                <div className="overflow-x-auto">
+                  <table className="table table-zebra w-full">
+                    <thead>
+                      <tr>
+                        <th>Date</th>
+                        <th>Duration</th>
+                        <th>Quality</th>
+                        <th>Time</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {childNaps.map(nap => (
+                        <tr key={nap.id}>
+                          <td>{new Date(nap.date).toLocaleDateString()}</td>
+                          <td>{formatDuration(nap.duration)}</td>
+                          <td>
+                            <div className="badge" data-quality={nap.quality}>
+                              {nap.quality}
+                            </div>
+                          </td>
+                          <td>{nap.startTime} - {nap.endTime}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
             </div>
           </div>
         </div>

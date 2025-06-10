@@ -105,232 +105,309 @@ export default function ParentAccount() {
   };
 
   return (
-    <div className="account-container">
-      <h1>Account Settings</h1>
+    <div className="container mx-auto p-4">
+      <h1 className="text-2xl font-bold mb-6">Account Settings</h1>
 
-      <section className="account-section">
-        <h2>Profile Information</h2>
-        <form onSubmit={handleProfileUpdate}>
-          <div className="form-group">
-            <label>First Name</label>
-            <input
-              type="text"
-              value={profile.firstName}
-              onChange={(e) => setProfile({ ...profile, firstName: e.target.value })}
-              disabled={!isEditing}
-              required
-            />
+      <div className="grid gap-6">
+        {/* Profile Information */}
+        <div className="card bg-base-100 shadow-xl">
+          <div className="card-body">
+            <h2 className="card-title">Profile Information</h2>
+            <form onSubmit={handleProfileUpdate}>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="form-control">
+                  <label className="label">
+                    <span className="label-text">First Name</span>
+                  </label>
+                  <input
+                    type="text"
+                    className="input input-bordered"
+                    value={profile.firstName}
+                    onChange={(e) => setProfile({ ...profile, firstName: e.target.value })}
+                    disabled={!isEditing}
+                    required
+                  />
+                </div>
+
+                <div className="form-control">
+                  <label className="label">
+                    <span className="label-text">Last Name</span>
+                  </label>
+                  <input
+                    type="text"
+                    className="input input-bordered"
+                    value={profile.lastName}
+                    onChange={(e) => setProfile({ ...profile, lastName: e.target.value })}
+                    disabled={!isEditing}
+                    required
+                  />
+                </div>
+
+                <div className="form-control">
+                  <label className="label">
+                    <span className="label-text">Email</span>
+                  </label>
+                  <input
+                    type="email"
+                    className="input input-bordered"
+                    value={profile.email}
+                    onChange={(e) => setProfile({ ...profile, email: e.target.value })}
+                    disabled={!isEditing}
+                    required
+                  />
+                </div>
+
+                <div className="form-control">
+                  <label className="label">
+                    <span className="label-text">Phone</span>
+                  </label>
+                  <input
+                    type="tel"
+                    className="input input-bordered"
+                    value={profile.phone}
+                    onChange={(e) => setProfile({ ...profile, phone: e.target.value })}
+                    disabled={!isEditing}
+                    required
+                  />
+                </div>
+
+                <div className="form-control md:col-span-2">
+                  <label className="label">
+                    <span className="label-text">Address</span>
+                  </label>
+                  <textarea
+                    className="textarea textarea-bordered h-24"
+                    value={profile.address}
+                    onChange={(e) => setProfile({ ...profile, address: e.target.value })}
+                    disabled={!isEditing}
+                    required
+                  />
+                </div>
+              </div>
+
+              <h3 className="font-bold mt-6 mb-4">Emergency Contact</h3>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="form-control">
+                  <label className="label">
+                    <span className="label-text">Name</span>
+                  </label>
+                  <input
+                    type="text"
+                    className="input input-bordered"
+                    value={profile.emergencyContact.name}
+                    onChange={(e) => setProfile({
+                      ...profile,
+                      emergencyContact: {
+                        ...profile.emergencyContact,
+                        name: e.target.value
+                      }
+                    })}
+                    disabled={!isEditing}
+                    required
+                  />
+                </div>
+
+                <div className="form-control">
+                  <label className="label">
+                    <span className="label-text">Relationship</span>
+                  </label>
+                  <input
+                    type="text"
+                    className="input input-bordered"
+                    value={profile.emergencyContact.relationship}
+                    onChange={(e) => setProfile({
+                      ...profile,
+                      emergencyContact: {
+                        ...profile.emergencyContact,
+                        relationship: e.target.value
+                      }
+                    })}
+                    disabled={!isEditing}
+                    required
+                  />
+                </div>
+
+                <div className="form-control">
+                  <label className="label">
+                    <span className="label-text">Phone</span>
+                  </label>
+                  <input
+                    type="tel"
+                    className="input input-bordered"
+                    value={profile.emergencyContact.phone}
+                    onChange={(e) => setProfile({
+                      ...profile,
+                      emergencyContact: {
+                        ...profile.emergencyContact,
+                        phone: e.target.value
+                      }
+                    })}
+                    disabled={!isEditing}
+                    required
+                  />
+                </div>
+              </div>
+
+              <div className="card-actions justify-end mt-6">
+                {!isEditing ? (
+                  <button type="button" className="btn btn-primary" onClick={() => setIsEditing(true)}>
+                    Edit Profile
+                  </button>
+                ) : (
+                  <div className="flex gap-2">
+                    <button type="submit" className="btn btn-primary">Save Changes</button>
+                    <button type="button" className="btn btn-ghost" onClick={() => setIsEditing(false)}>
+                      Cancel
+                    </button>
+                  </div>
+                )}
+              </div>
+            </form>
           </div>
+        </div>
 
-          <div className="form-group">
-            <label>Last Name</label>
-            <input
-              type="text"
-              value={profile.lastName}
-              onChange={(e) => setProfile({ ...profile, lastName: e.target.value })}
-              disabled={!isEditing}
-              required
-            />
-          </div>
+        {/* Children Information */}
+        <div className="card bg-base-100 shadow-xl">
+          <div className="card-body">
+            <h2 className="card-title">Children Information</h2>
+            <div className="space-y-6">
+              {children.map((child, index) => (
+                <div key={child.id} className="card bg-base-200">
+                  <div className="card-body">
+                    <h3 className="font-bold">Child {index + 1}</h3>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="form-control">
+                        <label className="label">
+                          <span className="label-text">Name</span>
+                        </label>
+                        <input
+                          type="text"
+                          className="input input-bordered"
+                          value={child.name}
+                          onChange={(e) => handleChildUpdate(index, 'name', e.target.value)}
+                          required
+                        />
+                      </div>
 
-          <div className="form-group">
-            <label>Email</label>
-            <input
-              type="email"
-              value={profile.email}
-              onChange={(e) => setProfile({ ...profile, email: e.target.value })}
-              disabled={!isEditing}
-              required
-            />
-          </div>
+                      <div className="form-control">
+                        <label className="label">
+                          <span className="label-text">Date of Birth</span>
+                        </label>
+                        <input
+                          type="date"
+                          className="input input-bordered"
+                          value={child.dateOfBirth}
+                          onChange={(e) => handleChildUpdate(index, 'dateOfBirth', e.target.value)}
+                          required
+                        />
+                      </div>
 
-          <div className="form-group">
-            <label>Phone</label>
-            <input
-              type="tel"
-              value={profile.phone}
-              onChange={(e) => setProfile({ ...profile, phone: e.target.value })}
-              disabled={!isEditing}
-              required
-            />
-          </div>
+                      <div className="form-control">
+                        <label className="label">
+                          <span className="label-text">Group</span>
+                        </label>
+                        <select
+                          className="select select-bordered"
+                          value={child.group}
+                          onChange={(e) => handleChildUpdate(index, 'group', e.target.value)}
+                          required
+                        >
+                          <option value="">Select a group</option>
+                          <option value="Infant">Infant</option>
+                          <option value="Toddler">Toddler</option>
+                          <option value="Pre-K">Pre-K</option>
+                        </select>
+                      </div>
 
-          <div className="form-group">
-            <label>Address</label>
-            <textarea
-              value={profile.address}
-              onChange={(e) => setProfile({ ...profile, address: e.target.value })}
-              disabled={!isEditing}
-              required
-            />
-          </div>
+                      <div className="form-control md:col-span-2">
+                        <label className="label">
+                          <span className="label-text">Allergies</span>
+                        </label>
+                        <textarea
+                          className="textarea textarea-bordered h-24"
+                          value={child.allergies}
+                          onChange={(e) => handleChildUpdate(index, 'allergies', e.target.value)}
+                          placeholder="List any allergies..."
+                        />
+                      </div>
 
-          <h3>Emergency Contact</h3>
-          <div className="form-group">
-            <label>Name</label>
-            <input
-              type="text"
-              value={profile.emergencyContact.name}
-              onChange={(e) => setProfile({
-                ...profile,
-                emergencyContact: {
-                  ...profile.emergencyContact,
-                  name: e.target.value
-                }
-              })}
-              disabled={!isEditing}
-              required
-            />
-          </div>
-
-          <div className="form-group">
-            <label>Relationship</label>
-            <input
-              type="text"
-              value={profile.emergencyContact.relationship}
-              onChange={(e) => setProfile({
-                ...profile,
-                emergencyContact: {
-                  ...profile.emergencyContact,
-                  relationship: e.target.value
-                }
-              })}
-              disabled={!isEditing}
-              required
-            />
-          </div>
-
-          <div className="form-group">
-            <label>Phone</label>
-            <input
-              type="tel"
-              value={profile.emergencyContact.phone}
-              onChange={(e) => setProfile({
-                ...profile,
-                emergencyContact: {
-                  ...profile.emergencyContact,
-                  phone: e.target.value
-                }
-              })}
-              disabled={!isEditing}
-              required
-            />
-          </div>
-
-          {!isEditing ? (
-            <button type="button" onClick={() => setIsEditing(true)}>
-              Edit Profile
-            </button>
-          ) : (
-            <div className="button-group">
-              <button type="submit">Save Changes</button>
-              <button type="button" onClick={() => setIsEditing(false)}>
-                Cancel
+                      <div className="form-control md:col-span-2">
+                        <label className="label">
+                          <span className="label-text">Medications</span>
+                        </label>
+                        <textarea
+                          className="textarea textarea-bordered h-24"
+                          value={child.medications}
+                          onChange={(e) => handleChildUpdate(index, 'medications', e.target.value)}
+                          placeholder="List any medications..."
+                        />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+            <div className="card-actions justify-end mt-4">
+              <button type="button" onClick={addChild} className="btn btn-secondary">
+                Add Another Child
               </button>
             </div>
-          )}
-        </form>
-      </section>
-
-      <section className="account-section">
-        <h2>Children Information</h2>
-        {children.map((child, index) => (
-          <div key={child.id} className="child-form">
-            <h3>Child {index + 1}</h3>
-            <div className="form-group">
-              <label>Name</label>
-              <input
-                type="text"
-                value={child.name}
-                onChange={(e) => handleChildUpdate(index, 'name', e.target.value)}
-                required
-              />
-            </div>
-
-            <div className="form-group">
-              <label>Date of Birth</label>
-              <input
-                type="date"
-                value={child.dateOfBirth}
-                onChange={(e) => handleChildUpdate(index, 'dateOfBirth', e.target.value)}
-                required
-              />
-            </div>
-
-            <div className="form-group">
-              <label>Group</label>
-              <select
-                value={child.group}
-                onChange={(e) => handleChildUpdate(index, 'group', e.target.value)}
-                required
-              >
-                <option value="">Select a group</option>
-                <option value="Infant">Infant</option>
-                <option value="Toddler">Toddler</option>
-                <option value="Pre-K">Pre-K</option>
-              </select>
-            </div>
-
-            <div className="form-group">
-              <label>Allergies</label>
-              <textarea
-                value={child.allergies}
-                onChange={(e) => handleChildUpdate(index, 'allergies', e.target.value)}
-                placeholder="List any allergies..."
-              />
-            </div>
-
-            <div className="form-group">
-              <label>Medications</label>
-              <textarea
-                value={child.medications}
-                onChange={(e) => handleChildUpdate(index, 'medications', e.target.value)}
-                placeholder="List any medications..."
-              />
-            </div>
           </div>
-        ))}
-        <button type="button" onClick={addChild} className="add-child-btn">
-          Add Another Child
-        </button>
-      </section>
+        </div>
 
-      <section className="account-section">
-        <h2>Change Password</h2>
-        <form onSubmit={handlePasswordChange}>
-          <div className="form-group">
-            <label>Current Password</label>
-            <input
-              type="password"
-              value={currentPassword}
-              onChange={(e) => setCurrentPassword(e.target.value)}
-              required
-            />
+        {/* Change Password */}
+        <div className="card bg-base-100 shadow-xl">
+          <div className="card-body">
+            <h2 className="card-title">Change Password</h2>
+            <form onSubmit={handlePasswordChange}>
+              <div className="grid gap-4 max-w-md">
+                <div className="form-control">
+                  <label className="label">
+                    <span className="label-text">Current Password</span>
+                  </label>
+                  <input
+                    type="password"
+                    className="input input-bordered"
+                    value={currentPassword}
+                    onChange={(e) => setCurrentPassword(e.target.value)}
+                    required
+                  />
+                </div>
+
+                <div className="form-control">
+                  <label className="label">
+                    <span className="label-text">New Password</span>
+                  </label>
+                  <input
+                    type="password"
+                    className="input input-bordered"
+                    value={newPassword}
+                    onChange={(e) => setNewPassword(e.target.value)}
+                    required
+                  />
+                </div>
+
+                <div className="form-control">
+                  <label className="label">
+                    <span className="label-text">Confirm New Password</span>
+                  </label>
+                  <input
+                    type="password"
+                    className="input input-bordered"
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                    required
+                  />
+                </div>
+
+                <div className="form-control mt-2">
+                  <button type="submit" className="btn btn-primary">Update Password</button>
+                </div>
+              </div>
+            </form>
           </div>
-
-          <div className="form-group">
-            <label>New Password</label>
-            <input
-              type="password"
-              value={newPassword}
-              onChange={(e) => setNewPassword(e.target.value)}
-              required
-            />
-          </div>
-
-          <div className="form-group">
-            <label>Confirm New Password</label>
-            <input
-              type="password"
-              value={confirmPassword}
-              onChange={(e) => setConfirmPassword(e.target.value)}
-              required
-            />
-          </div>
-
-          <button type="submit">Update Password</button>
-        </form>
-      </section>
+        </div>
+      </div>
     </div>
   );
 } 

@@ -20,7 +20,6 @@ export default function Login() {
   return (
     <div className="auth-page">
       <div className="auth-page-title">
-        <h1>Login Page</h1>
       </div>
       <div className="auth-container">
         <LoginForm />

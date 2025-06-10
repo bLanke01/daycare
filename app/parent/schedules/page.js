@@ -113,121 +113,124 @@ export default function ParentSchedules() {
   const calendarDays = generateCalendarDays();
 
   return (
-    <div className="parent-schedules-page">
-      <div className="page-header">
-        <h1>Daycare Schedule</h1>
-      </div>
-
-      <div className="calendar-container">
-        <div className="calendar-navigation">
-          <button className="nav-btn" onClick={goToPreviousMonth}>
-            &lt; Previous
-          </button>
-          <h2 className="current-month">
-            {monthNames[currentMonth]} {currentYear}
-          </h2>
-          <button className="nav-btn" onClick={goToNextMonth}>
-            Next &gt;
-          </button>
-        </div>
-
-        <div className="calendar-grid">
-          <div className="calendar-header">
-            <div className="weekday">Sunday</div>
-            <div className="weekday">Monday</div>
-            <div className="weekday">Tuesday</div>
-            <div className="weekday">Wednesday</div>
-            <div className="weekday">Thursday</div>
-            <div className="weekday">Friday</div>
-            <div className="weekday">Saturday</div>
+    <div className="container mx-auto p-4">
+      <div className="card bg-base-100 shadow-xl mb-6">
+        <div className="card-body">
+          <h1 className="card-title text-2xl">Daycare Schedule</h1>
+          
+          <div className="flex justify-between items-center mt-4">
+            <button className="btn btn-ghost" onClick={goToPreviousMonth}>
+              ← Previous
+            </button>
+            <h2 className="text-xl font-semibold">
+              {monthNames[currentMonth]} {currentYear}
+            </h2>
+            <button className="btn btn-ghost" onClick={goToNextMonth}>
+              Next →
+            </button>
           </div>
 
-          <div className="calendar-days">
-            {calendarDays.map((calendarDay, index) => (
-              <div 
-                key={index} 
-                className={`calendar-day ${!calendarDay.day ? 'empty' : ''} ${
-                  calendarDay.day === new Date().getDate() && 
-                  currentMonth === new Date().getMonth() && 
-                  currentYear === new Date().getFullYear() ? 'today' : ''
-                }`}
-              >
-                {calendarDay.day && (
-                  <>
-                    <div className="day-number">{calendarDay.day}</div>
-                    <div className="day-events">
-                      {calendarDay.events.map(event => (
-                        <div 
-                          key={event.id} 
-                          className="event"
-                          onClick={() => {
-                            setSelectedEvent(event);
-                            setShowEventDetails(true);
-                          }}
-                        >
-                          <div className="event-title">{event.title}</div>
-                          <div className="event-time">{event.time}</div>
-                        </div>
-                      ))}
-                    </div>
-                  </>
-                )}
-              </div>
-            ))}
+          <div className="overflow-x-auto mt-6">
+            <div className="grid grid-cols-7 gap-1">
+              {/* Calendar Header */}
+              {['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'].map(day => (
+                <div key={day} className="p-2 text-center font-semibold bg-base-200">
+                  {day}
+                </div>
+              ))}
+
+              {/* Calendar Days */}
+              {calendarDays.map((calendarDay, index) => (
+                <div 
+                  key={index} 
+                  className={`min-h-[100px] p-2 border border-base-200 ${
+                    !calendarDay.day ? 'bg-base-200/50' : 
+                    calendarDay.day === new Date().getDate() && 
+                    currentMonth === new Date().getMonth() && 
+                    currentYear === new Date().getFullYear() ? 'bg-primary/10' : ''
+                  }`}
+                >
+                  {calendarDay.day && (
+                    <>
+                      <div className="text-right mb-2">{calendarDay.day}</div>
+                      <div className="space-y-1">
+                        {calendarDay.events.map(event => (
+                          <div 
+                            key={event.id} 
+                            className="badge badge-primary cursor-pointer p-2 text-xs"
+                            onClick={() => {
+                              setSelectedEvent(event);
+                              setShowEventDetails(true);
+                            }}
+                          >
+                            {event.title}
+                          </div>
+                        ))}
+                      </div>
+                    </>
+                  )}
+                </div>
+              ))}
+            </div>
           </div>
         </div>
-
-        {loading && (
-          <div className="loading-overlay">
-            <div className="loading-spinner"></div>
-            <p>Loading schedule...</p>
-          </div>
-        )}
       </div>
+
+      {loading && (
+        <div className="fixed inset-0 bg-black/50 flex justify-center items-center z-50">
+          <span className="loading loading-spinner loading-lg text-primary"></span>
+        </div>
+      )}
 
       {/* Event Details Modal */}
       {showEventDetails && selectedEvent && (
-        <div className="modal-overlay">
-          <div className="modal">
-            <div className="modal-header">
-              <h2>Event Details</h2>
-              <button 
-                className="close-btn"
-                onClick={() => setShowEventDetails(false)}
-              >
-                &times;
-              </button>
-            </div>
+        <div className="fixed inset-0 bg-black/50 flex justify-center items-center z-50">
+          <div className="modal-box relative">
+            <button 
+              className="btn btn-sm btn-circle absolute right-2 top-2"
+              onClick={() => setShowEventDetails(false)}
+            >
+              ✕
+            </button>
             
-            <div className="modal-content">
-              <h3>{selectedEvent.title}</h3>
-              
-              <div className="detail-item">
-                <span className="detail-label">Date:</span>
-                <span className="detail-value">
+            <h3 className="text-lg font-bold mb-4">{selectedEvent.title}</h3>
+            
+            <div className="space-y-4">
+              <div>
+                <label className="text-sm font-semibold opacity-70">Date:</label>
+                <p>
                   {selectedEvent.date.toLocaleDateString('en-US', {
                     weekday: 'long',
                     year: 'numeric',
                     month: 'long',
                     day: 'numeric'
                   })}
-                </span>
+                </p>
               </div>
               
-              <div className="detail-item">
-                <span className="detail-label">Time:</span>
-                <span className="detail-value">{selectedEvent.time}</span>
+              <div>
+                <label className="text-sm font-semibold opacity-70">Time:</label>
+                <p>{selectedEvent.time}</p>
               </div>
               
-              <div className="detail-item">
-                <span className="detail-label">Group:</span>
-                <span className="detail-value">{selectedEvent.group}</span>
+              <div>
+                <label className="text-sm font-semibold opacity-70">Group:</label>
+                <p>{selectedEvent.group}</p>
               </div>
               
-              <div className="detail-item">
-                <span className="detail-label">Description:</span>
-                <p className="detail-value">{selectedEvent.description}</p>
+              <div>
+                <label className="text-sm font-semibold opacity-70">Description:</label>
+                <p className="whitespace-pre-wrap">{selectedEvent.description}</p>
               </div>
+            </div>
+
+            <div className="modal-action">
+              <button 
+                className="btn btn-primary"
+                onClick={() => setShowEventDetails(false)}
+              >
+                Close
+              </button>
             </div>
           </div>
         </div>

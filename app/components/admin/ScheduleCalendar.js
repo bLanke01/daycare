@@ -23,6 +23,7 @@ const ScheduleCalendar = () => {
   const [currentYear, setCurrentYear] = useState(today.getFullYear());
   const [events, setEvents] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   
   // Fetch events from Firestore
   useEffect(() => {
@@ -53,6 +54,7 @@ const ScheduleCalendar = () => {
         setLoading(false);
       } catch (error) {
         console.error('Error fetching events:', error);
+        setError('Failed to load events');
         setLoading(false);
       }
     };
@@ -62,7 +64,7 @@ const ScheduleCalendar = () => {
   
   // State for new event form
   const [showEventForm, setShowEventForm] = useState(false);
-  const [selectedDate, setSelectedDate] = useState(null);
+  const [selectedDate, setSelectedDate] = useState(new Date());
   const [newEvent, setNewEvent] = useState({
     title: '',
     date: '',
@@ -91,29 +93,38 @@ const ScheduleCalendar = () => {
   
   // Generate calendar days
   const generateCalendarDays = () => {
-    const daysInMonth = getDaysInMonth(currentMonth, currentYear);
-    const firstDay = getFirstDayOfMonth(currentMonth, currentYear);
-    const calendarDays = [];
+    const year = selectedDate.getFullYear();
+    const month = selectedDate.getMonth();
+    const firstDay = new Date(year, month, 1);
+    const lastDay = new Date(year, month + 1, 0);
+    const startingDay = firstDay.getDay();
+    const totalDays = lastDay.getDate();
     
-    // Add empty cells for days before the first day of the month
-    for (let i = 0; i < firstDay; i++) {
-      calendarDays.push({ day: null, events: [] });
+    const days = [];
+    let day = 1;
+    
+    for (let i = 0; i < 6; i++) {
+      const week = [];
+      for (let j = 0; j < 7; j++) {
+        if (i === 0 && j < startingDay) {
+          week.push(null);
+        } else if (day > totalDays) {
+          week.push(null);
+        } else {
+          const currentDate = new Date(year, month, day);
+          const dayEvents = events.filter(event => {
+            const eventDate = new Date(event.date);
+            return eventDate.toDateString() === currentDate.toDateString();
+          });
+          week.push({ day, events: dayEvents });
+          day++;
+        }
+      }
+      days.push(week);
+      if (day > totalDays) break;
     }
     
-    // Add cells for each day of the month
-    for (let day = 1; day <= daysInMonth; day++) {
-      const date = new Date(currentYear, currentMonth, day);
-      const dayEvents = events.filter(event => {
-        const eventDate = event.date;
-        return eventDate.getDate() === day &&
-               eventDate.getMonth() === currentMonth &&
-               eventDate.getFullYear() === currentYear;
-      });
-      
-      calendarDays.push({ day, date, events: dayEvents });
-    }
-    
-    return calendarDays;
+    return days;
   };
   
   // Calendar navigation
@@ -200,6 +211,9 @@ const ScheduleCalendar = () => {
     e.preventDefault();
     
     try {
+      setLoading(true);
+      setError(null);
+
       // Create a date object that preserves the selected date
       const [year, month, day] = newEvent.date.split('-').map(Number);
       const dateObj = new Date(year, month - 1, day); // month is 0-based in Date constructor
@@ -246,13 +260,18 @@ const ScheduleCalendar = () => {
       });
     } catch (error) {
       console.error('Error saving event:', error);
-      alert('Error saving event. Please try again.');
+      setError('Failed to save event');
+    } finally {
+      setLoading(false);
     }
   };
   
   // Handle event deletion
   const handleDeleteEvent = async (eventId) => {
     try {
+      setLoading(true);
+      setError(null);
+
       await deleteDoc(doc(db, 'events', eventId));
       setEvents(events.filter(event => event.id !== eventId));
       setShowEventDetails(false);
@@ -260,7 +279,9 @@ const ScheduleCalendar = () => {
       setTimeout(() => setNotificationStatus(''), 3000);
     } catch (error) {
       console.error('Error deleting event:', error);
-      alert('Error deleting event. Please try again.');
+      setError('Failed to delete event');
+    } finally {
+      setLoading(false);
     }
   };
   
@@ -272,293 +293,283 @@ const ScheduleCalendar = () => {
   
   const calendarDays = generateCalendarDays();
   
-  if (loading) {
+  if (loading && events.length === 0) {
     return (
-      <div className="loading-overlay">
-        <div className="loading-spinner"></div>
-        <p>Loading calendar...</p>
+      <div className="min-h-screen bg-base-200 flex justify-center items-center">
+        <span className="loading loading-spinner loading-lg text-primary"></span>
       </div>
     );
   }
   
   return (
-    <div className="schedule-calendar">
-      <div className="page-header">
-        <h1>Schedule & Calendar</h1>
-        <button 
-          className="add-event-btn"
-          onClick={() => {
-            setSelectedDate(new Date());
-            setNewEvent({
-              ...newEvent,
-              date: new Date().toISOString().split('T')[0]
-            });
-            setShowEventForm(true);
-          }}
-        >
-          Add New Event
-        </button>
-      </div>
-      
-      {/* Notification Status */}
-      {notificationStatus && (
-        <div className={`notification-status ${sendingNotifications ? 'processing' : 'success'}`}>
-          {sendingNotifications && <div className="notification-spinner"></div>}
-          {notificationStatus}
-        </div>
-      )}
-      
-      <div className="calendar-container">
-        <div className="calendar-navigation">
-          <button className="nav-btn" onClick={goToPreviousMonth}>
-            &lt; Previous
-          </button>
-          <h2 className="current-month">
-            {monthNames[currentMonth]} {currentYear}
-          </h2>
-          <button className="nav-btn" onClick={goToNextMonth}>
-            Next &gt;
-          </button>
-        </div>
+    <div className="min-h-screen bg-base-200 p-6">
+      <div className="max-w-7xl mx-auto space-y-6">
+        <h1 className="text-4xl font-bold text-base-content">
+          <span className="text-primary">Schedule</span> Calendar
+        </h1>
 
-        <div className="calendar-grid">
-          <div className="calendar-header">
-            <div className="weekday">Sunday</div>
-            <div className="weekday">Monday</div>
-            <div className="weekday">Tuesday</div>
-            <div className="weekday">Wednesday</div>
-            <div className="weekday">Thursday</div>
-            <div className="weekday">Friday</div>
-            <div className="weekday">Saturday</div>
+        {error && (
+          <div className="alert alert-error">
+            <svg xmlns="http://www.w3.org/2000/svg" className="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            <span>{error}</span>
           </div>
+        )}
 
-          <div className="calendar-days">
-            {calendarDays.map((calendarDay, index) => (
-              <div 
-                key={index} 
-                className={`calendar-day ${!calendarDay.day ? 'empty' : ''} ${
-                  calendarDay.day === today.getDate() && 
-                  currentMonth === today.getMonth() && 
-                  currentYear === today.getFullYear() ? 'today' : ''
-                }`}
-                onClick={() => calendarDay.day && handleDateClick(calendarDay.date)}
-              >
-                {calendarDay.day && (
-                  <>
-                    <div className="day-number">{calendarDay.day}</div>
-                    <div className="day-events">
-                      {calendarDay.events.map(event => (
-                        <div 
-                          key={event.id} 
-                          className="event"
-                          onClick={(e) => handleEventClick(event, e)}
-                        >
-                          <div className="event-title">{event.title}</div>
-                          <div className="event-time">{event.time}</div>
-                        </div>
-                      ))}
-                    </div>
-                  </>
-                )}
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
-
-      {/* Event Form Modal */}
-      {showEventForm && (
-        <div className="modal-overlay">
-          <div className="modal">
-            <div className="modal-header">
-              <h2>{newEvent.id ? 'Edit Event' : 'Add New Event'}</h2>
-              <button 
-                className="close-btn"
-                onClick={() => setShowEventForm(false)}
-              >
-                &times;
-              </button>
-            </div>
-            
-            <form onSubmit={handleSubmit}>
-              <div className="form-group">
-                <label htmlFor="title">Event Title</label>
-                <input
-                  type="text"
-                  id="title"
-                  name="title"
-                  value={newEvent.title}
-                  onChange={handleInputChange}
-                  required
-                />
-              </div>
-              
-              <div className="form-group">
-                <label htmlFor="date">Date</label>
-                <input
-                  type="date"
-                  id="date"
-                  name="date"
-                  value={newEvent.date}
-                  onChange={handleInputChange}
-                  required
-                />
-              </div>
-              
-              <div className="form-group">
-                <label htmlFor="group">Group</label>
-                <select
-                  id="group"
-                  name="group"
-                  value={newEvent.group}
-                  onChange={handleInputChange}
-                  required
+        {/* Calendar Header */}
+        <div className="card bg-base-100 shadow-xl">
+          <div className="card-body">
+            <div className="flex justify-between items-center">
+              <div className="flex items-center gap-4">
+                <button
+                  className="btn btn-circle btn-ghost"
+                  onClick={goToPreviousMonth}
                 >
-                  <option value="">Select a group</option>
-                  <option value="All">All Groups</option>
-                  <option value="Infant">Infant</option>
-                  <option value="Toddler">Toddler</option>
-                  <option value="Pre-K">Pre-K</option>
-                  <option value="Infant, Toddler">Infant & Toddler</option>
-                  <option value="Toddler, Pre-K">Toddler & Pre-K</option>
-                </select>
-              </div>
-              
-              <div className="form-group">
-                <label htmlFor="time">Time</label>
-                <input
-                  type="text"
-                  id="time"
-                  name="time"
-                  value={newEvent.time}
-                  onChange={handleInputChange}
-                  placeholder="e.g. 9:00 AM - 11:00 AM"
-                  required
-                />
-              </div>
-              
-              <div className="form-group">
-                <label htmlFor="description">Description</label>
-                <textarea
-                  id="description"
-                  name="description"
-                  value={newEvent.description}
-                  onChange={handleInputChange}
-                  rows="3"
-                ></textarea>
-              </div>
-              
-              {/* Notification Info */}
-              {!newEvent.id && (
-                <div className="notification-info">
-                  <h4>📧 Notifications</h4>
-                  <p>When you create this event, notifications will be automatically sent to:</p>
-                  <ul>
-                    <li>✅ All administrators (if they have event notifications enabled)</li>
-                    <li>✅ Parents in the selected group(s) (if they have event notifications enabled)</li>
-                  </ul>
-                  <p><small>Users can manage their notification preferences in Settings.</small></p>
-                </div>
-              )}
-              
-              <div className="form-actions">
-                <button 
-                  type="submit" 
-                  className="submit-btn"
-                  disabled={sendingNotifications}
-                >
-                  {sendingNotifications ? (
-                    <>
-                      <div className="btn-spinner"></div>
-                      {newEvent.id ? 'Saving...' : 'Creating & Notifying...'}
-                    </>
-                  ) : (
-                    newEvent.id ? 'Save Changes' : 'Add Event'
-                  )}
+                  ❮
                 </button>
-                <button 
-                  type="button" 
-                  className="cancel-btn"
-                  onClick={() => setShowEventForm(false)}
-                  disabled={sendingNotifications}
+                <h2 className="text-2xl font-bold">
+                  {monthNames[currentMonth]} {currentYear}
+                </h2>
+                <button
+                  className="btn btn-circle btn-ghost"
+                  onClick={goToNextMonth}
                 >
-                  Cancel
+                  ❯
                 </button>
               </div>
-            </form>
-          </div>
-        </div>
-      )}
-      
-      {/* Event Details Modal */}
-      {showEventDetails && selectedEvent && (
-        <div className="modal-overlay">
-          <div className="modal">
-            <div className="modal-header">
-              <h2>Event Details</h2>
-              <button 
-                className="close-btn"
-                onClick={() => setShowEventDetails(false)}
-              >
-                &times;
-              </button>
-            </div>
-            
-            <div className="modal-content">
-              <h3>{selectedEvent.title}</h3>
-              
-              <div className="detail-item">
-                <span className="detail-label">Date:</span>
-                <span className="detail-value">
-                  {selectedEvent.date.toLocaleDateString('en-US', {
-                    weekday: 'long',
-                    year: 'numeric',
-                    month: 'long',
-                    day: 'numeric'
-                  })}
-                </span>
-              </div>
-              
-              <div className="detail-item">
-                <span className="detail-label">Time:</span>
-                <span className="detail-value">{selectedEvent.time}</span>
-              </div>
-              
-              <div className="detail-item">
-                <span className="detail-label">Group:</span>
-                <span className="detail-value">{selectedEvent.group}</span>
-              </div>
-              
-              <div className="detail-item">
-                <span className="detail-label">Description:</span>
-                <p className="detail-value">{selectedEvent.description}</p>
-              </div>
-            </div>
-            
-            <div className="modal-actions">
-              <button 
-                className="edit-btn"
+              <button
+                className="btn btn-primary"
                 onClick={() => {
+                  setSelectedDate(new Date());
                   setNewEvent({
-                    ...selectedEvent,
-                    date: selectedEvent.date.toISOString().split('T')[0]
+                    ...newEvent,
+                    date: new Date().toISOString().split('T')[0]
                   });
-                  setShowEventDetails(false);
                   setShowEventForm(true);
                 }}
               >
-                Edit Event
-              </button>
-              <button 
-                className="delete-btn"
-                onClick={() => handleDeleteEvent(selectedEvent.id)}
-              >
-                Delete Event
+                Add Event
               </button>
             </div>
           </div>
         </div>
-      )}
+
+        {/* Calendar Grid */}
+        <div className="card bg-base-100 shadow-xl overflow-x-auto">
+          <div className="card-body p-0">
+            <table className="table table-fixed w-full">
+              <thead>
+                <tr>
+                  {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map((day) => (
+                    <th key={day} className="bg-base-200 text-center py-4">
+                      {day}
+                    </th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {calendarDays.map((week, weekIndex) => (
+                  <tr key={weekIndex}>
+                    {week.map((dayData, dayIndex) => (
+                      <td
+                        key={dayIndex}
+                        className={`h-32 p-2 align-top border border-base-200 ${
+                          dayData ? 'hover:bg-base-200' : 'bg-base-200/50'
+                        }`}
+                      >
+                        {dayData && (
+                          <>
+                            <div className="text-right mb-2">
+                              <span className={`inline-block rounded-full w-6 h-6 text-center leading-6 ${
+                                new Date(currentYear, currentMonth, dayData.day).toDateString() === today.toDateString()
+                                  ? 'bg-primary text-primary-content'
+                                  : ''
+                              }`}>
+                                {dayData.day}
+                              </span>
+                            </div>
+                            <div className="space-y-1">
+                              {dayData.events.map((event) => (
+                                <div
+                                  key={event.id}
+                                  className={`text-xs p-1 rounded cursor-pointer truncate ${
+                                    event.type === 'activity'
+                                      ? 'bg-primary/20 text-primary-content'
+                                      : event.type === 'holiday'
+                                      ? 'bg-secondary/20 text-secondary-content'
+                                      : 'bg-accent/20 text-accent-content'
+                                  }`}
+                                  onClick={(e) => handleEventClick(event, e)}
+                                >
+                                  {event.title}
+                                </div>
+                              ))}
+                            </div>
+                          </>
+                        )}
+                      </td>
+                    ))}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        {/* Event Form Modal */}
+        {showEventForm && (
+          <div className="modal modal-open">
+            <div className="modal-box max-w-2xl">
+              <button
+                className="btn btn-sm btn-circle btn-ghost absolute right-2 top-2"
+                onClick={() => {
+                  setShowEventForm(false);
+                  setNewEvent({
+                    title: '',
+                    date: '',
+                    group: '',
+                    time: '',
+                    description: ''
+                  });
+                }}
+              >
+                ✕
+              </button>
+              
+              <h3 className="font-bold text-lg mb-4">
+                {selectedEvent ? 'Edit Event' : 'Add New Event'}
+              </h3>
+
+              <form onSubmit={handleSubmit} className="space-y-4">
+                <div className="form-control">
+                  <label className="label">
+                    <span className="label-text">Title</span>
+                  </label>
+                  <input
+                    type="text"
+                    className="input input-bordered"
+                    value={newEvent.title}
+                    onChange={handleInputChange}
+                    name="title"
+                    required
+                  />
+                </div>
+
+                <div className="form-control">
+                  <label className="label">
+                    <span className="label-text">Description</span>
+                  </label>
+                  <textarea
+                    className="textarea textarea-bordered h-24"
+                    value={newEvent.description}
+                    onChange={handleInputChange}
+                    name="description"
+                  ></textarea>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="form-control">
+                    <label className="label">
+                      <span className="label-text">Date</span>
+                    </label>
+                    <input
+                      type="date"
+                      className="input input-bordered"
+                      value={newEvent.date}
+                      onChange={handleInputChange}
+                      name="date"
+                      required
+                    />
+                  </div>
+
+                  <div className="form-control">
+                    <label className="label">
+                      <span className="label-text">Group</span>
+                    </label>
+                    <select
+                      className="select select-bordered"
+                      value={newEvent.group}
+                      onChange={handleInputChange}
+                      name="group"
+                      required
+                    >
+                      <option value="">Select a group</option>
+                      <option value="All">All Groups</option>
+                      <option value="Infant">Infant</option>
+                      <option value="Toddler">Toddler</option>
+                      <option value="Pre-K">Pre-K</option>
+                      <option value="Infant, Toddler">Infant & Toddler</option>
+                      <option value="Toddler, Pre-K">Toddler & Pre-K</option>
+                    </select>
+                  </div>
+
+                  <div className="form-control">
+                    <label className="label">
+                      <span className="label-text">Time</span>
+                    </label>
+                    <input
+                      type="time"
+                      className="input input-bordered"
+                      value={newEvent.time}
+                      onChange={handleInputChange}
+                      name="time"
+                      required
+                    />
+                  </div>
+                </div>
+
+                <div className="modal-action">
+                  {selectedEvent && (
+                    <button
+                      type="button"
+                      className="btn btn-error"
+                      onClick={() => {
+                        if (confirm('Are you sure you want to delete this event?')) {
+                          handleDeleteEvent(selectedEvent.id);
+                        }
+                      }}
+                    >
+                      Delete
+                    </button>
+                  )}
+                  <button
+                    type="button"
+                    className="btn btn-ghost"
+                    onClick={() => {
+                      setShowEventForm(false);
+                      setNewEvent({
+                        title: '',
+                        date: '',
+                        group: '',
+                        time: '',
+                        description: ''
+                      });
+                    }}
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    className={`btn btn-primary ${loading ? 'loading' : ''}`}
+                    disabled={loading}
+                  >
+                    {selectedEvent ? 'Update Event' : 'Add Event'}
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        )}
+
+        {/* Notification Status */}
+        {notificationStatus && (
+          <div className={`notification-status ${sendingNotifications ? 'processing' : 'success'}`}>
+            {sendingNotifications && <div className="notification-spinner"></div>}
+            {notificationStatus}
+          </div>
+        )}
+      </div>
     </div>
   );
 };

@@ -1,622 +1,402 @@
 // components/admin/MealPlanner.js
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { collection, getDocs, addDoc, updateDoc, deleteDoc, doc } from 'firebase/firestore';
+import { db } from '../../firebase/config';
 
 const MealPlanner = () => {
-  // Current week date range
-  const getWeekDates = () => {
-    const today = new Date();
-    const currentDay = today.getDay(); // 0 = Sunday, 1 = Monday, etc.
-    const startDate = new Date(today);
-    
-    // Find the Monday of the current week
-    startDate.setDate(today.getDate() - currentDay + (currentDay === 0 ? -6 : 1));
-    
-    const weekDates = [];
-    for (let i = 0; i < 5; i++) {
-      const date = new Date(startDate);
-      date.setDate(startDate.getDate() + i);
-      weekDates.push(date);
-    }
-    
-    return weekDates;
-  };
-  
-  const weekDates = getWeekDates();
-  
-  // Mock data for meal plans
-  const [mealPlans, setMealPlans] = useState({
-    // Monday
-    [weekDates[0].toISOString().split('T')[0]]: {
-      breakfast: {
-        main: 'Whole grain cereal',
-        side: 'Fresh berries',
-        drink: 'Milk'
-      },
-      snackAM: {
-        main: 'Apple slices',
-        side: 'Cheese cubes'
-      },
-      lunch: {
-        main: 'Turkey and cheese sandwich on whole wheat',
-        side: 'Vegetable soup',
-        dessert: 'Orange slices'
-      },
-      snackPM: {
-        main: 'Yogurt',
-        side: 'Graham crackers'
-      }
-    },
-    // Tuesday
-    [weekDates[1].toISOString().split('T')[0]]: {
-      breakfast: {
-        main: 'Oatmeal with cinnamon',
-        side: 'Sliced bananas',
-        drink: 'Milk'
-      },
-      snackAM: {
-        main: 'Carrot sticks',
-        side: 'Hummus'
-      },
-      lunch: {
-        main: 'Chicken quesadilla',
-        side: 'Black beans and corn',
-        dessert: 'Apple sauce'
-      },
-      snackPM: {
-        main: 'Fruit smoothie',
-        side: 'Whole grain crackers'
-      }
-    },
-    // Wednesday
-    [weekDates[2].toISOString().split('T')[0]]: {
-      breakfast: {
-        main: 'Scrambled eggs',
-        side: 'Whole wheat toast',
-        drink: 'Orange juice'
-      },
-      snackAM: {
-        main: 'Banana',
-        side: 'Peanut butter (sun butter for allergies)'
-      },
-      lunch: {
-        main: 'Pasta with marinara sauce',
-        side: 'Garden salad',
-        dessert: 'Peach slices'
-      },
-      snackPM: {
-        main: 'Trail mix',
-        side: 'Yogurt'
-      }
-    },
-    // Thursday
-    [weekDates[3].toISOString().split('T')[0]]: {
-      breakfast: {
-        main: 'Whole grain pancakes',
-        side: 'Sliced strawberries',
-        drink: 'Milk'
-      },
-      snackAM: {
-        main: 'Bell pepper strips',
-        side: 'Ranch dip'
-      },
-      lunch: {
-        main: 'Tuna salad sandwich',
-        side: 'Cucumber slices',
-        dessert: 'Grapes'
-      },
-      snackPM: {
-        main: 'Cheese and crackers',
-        side: 'Apple slices'
-      }
-    },
-    // Friday
-    [weekDates[4].toISOString().split('T')[0]]: {
-      breakfast: {
-        main: 'Yogurt parfait',
-        side: 'Granola',
-        drink: 'Milk'
-      },
-      snackAM: {
-        main: 'Orange slices',
-        side: 'String cheese'
-      },
-      lunch: {
-        main: 'Bean and cheese burrito',
-        side: 'Spanish rice',
-        dessert: 'Watermelon'
-      },
-      snackPM: {
-        main: 'Whole grain muffin',
-        side: 'Milk'
-      }
-    }
-  });
-  
-  // State for selected date and meal type being edited
-  const [selectedDate, setSelectedDate] = useState(weekDates[0].toISOString().split('T')[0]);
-  const [editingMeal, setEditingMeal] = useState(null);
-  const [showAllergyInfo, setShowAllergyInfo] = useState(false);
-  const [searchWeek, setSearchWeek] = useState(weekDates[0].toISOString().split('T')[0]);
-  
-  // State for meal being edited
-  const [mealEdit, setMealEdit] = useState({
-    main: '',
-    side: '',
+  const [meals, setMeals] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
+  const [selectedMeal, setSelectedMeal] = useState(null);
+  const [editMode, setEditMode] = useState(false);
+
+  const [formData, setFormData] = useState({
+    date: new Date().toISOString().split('T')[0],
+    type: 'breakfast',
+    mainDish: '',
+    sideDish: '',
+    fruit: '',
+    vegetable: '',
     drink: '',
-    dessert: ''
+    snack: '',
+    allergies: '',
+    notes: ''
   });
-  
-  // Mock data for food allergies
-  const childrenAllergies = [
-    { name: 'Noah Garcia', allergies: ['Peanuts', 'Tree nuts'] },
-    { name: 'Olivia Martinez', allergies: ['Dairy'] },
-    { name: 'Emma Thompson', allergies: ['None'] },
-    { name: 'William Johnson', allergies: ['Eggs', 'Wheat'] },
-    { name: 'Sophia Wilson', allergies: ['None'] }
-  ];
-  
-  // Format date for display
-  const formatDate = (dateString) => {
-    const date = new Date(dateString);
-    return date.toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' });
+
+  useEffect(() => {
+    loadMeals();
+  }, []);
+
+  const loadMeals = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+
+      const mealsRef = collection(db, 'meals');
+      const querySnapshot = await getDocs(mealsRef);
+
+      const mealsData = querySnapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      }));
+
+      setMeals(mealsData);
+    } catch (err) {
+      console.error('Error loading meals:', err);
+      setError('Failed to load meals');
+    } finally {
+      setLoading(false);
+    }
   };
-  
-  // Navigate to previous week
-  const goToPreviousWeek = () => {
-    const date = new Date(searchWeek);
-    date.setDate(date.getDate() - 7);
-    setSearchWeek(date.toISOString().split('T')[0]);
+
+  const handleInputChange = (field, value) => {
+    setFormData(prev => ({
+      ...prev,
+      [field]: value
+    }));
   };
-  
-  // Navigate to next week
-  const goToNextWeek = () => {
-    const date = new Date(searchWeek);
-    date.setDate(date.getDate() + 7);
-    setSearchWeek(date.toISOString().split('T')[0]);
-  };
-  
-  // Handle edit button click
-  const handleEditClick = (date, mealType) => {
-    setSelectedDate(date);
-    setEditingMeal(mealType);
-    
-    // Initialize form with current meal data
-    const currentMeal = mealPlans[date] && mealPlans[date][mealType] 
-      ? mealPlans[date][mealType] 
-      : { main: '', side: '', drink: '', dessert: '' };
-      
-    setMealEdit({ ...currentMeal });
-  };
-  
-  // Handle input changes in the edit form
-  const handleMealInputChange = (e) => {
-    const { name, value } = e.target;
-    setMealEdit({
-      ...mealEdit,
-      [name]: value
-    });
-  };
-  
-  // Handle form submission
-  const handleSubmit = (e) => {
+
+  const handleSubmit = async (e) => {
     e.preventDefault();
     
-    // Update meal plan for the selected date and meal type
-    const updatedMealPlans = { ...mealPlans };
-    
-    // Initialize date if it doesn't exist
-    if (!updatedMealPlans[selectedDate]) {
-      updatedMealPlans[selectedDate] = {};
-    }
-    
-    // Update the meal
-    updatedMealPlans[selectedDate][editingMeal] = { ...mealEdit };
-    
-    setMealPlans(updatedMealPlans);
-    setEditingMeal(null);
-  };
-  
-  // Check for allergies in a meal
-  const checkForAllergies = (meal) => {
-    const allergensInMeal = [];
-    const allMealItems = [meal.main, meal.side, meal.drink, meal.dessert].filter(Boolean);
-    
-    // This is a simplified check - in a real app, you would have a more sophisticated allergen detection
-    const allergenKeywords = {
-      'Peanuts': ['peanut', 'peanuts', 'peanut butter'],
-      'Tree nuts': ['almonds', 'walnuts', 'cashews', 'pecans', 'nuts'],
-      'Dairy': ['milk', 'cheese', 'yogurt', 'dairy'],
-      'Eggs': ['egg', 'eggs'],
-      'Wheat': ['wheat', 'bread', 'pasta', 'cereal']
-    };
-    
-    // Check each allergen against meal items
-    Object.entries(allergenKeywords).forEach(([allergen, keywords]) => {
-      const found = allMealItems.some(item => 
-        item && keywords.some(keyword => 
-          item.toLowerCase().includes(keyword.toLowerCase())
-        )
-      );
-      
-      if (found) {
-        allergensInMeal.push(allergen);
+    try {
+      setLoading(true);
+      setError(null);
+
+      if (editMode && selectedMeal) {
+        const mealRef = doc(db, 'meals', selectedMeal.id);
+        await updateDoc(mealRef, formData);
+      } else {
+        await addDoc(collection(db, 'meals'), formData);
       }
+
+      await loadMeals();
+      resetForm();
+    } catch (err) {
+      console.error('Error saving meal:', err);
+      setError('Failed to save meal');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleEdit = (meal) => {
+    setSelectedMeal(meal);
+    setFormData(meal);
+    setEditMode(true);
+  };
+
+  const handleDelete = async (mealId) => {
+    try {
+      setLoading(true);
+      setError(null);
+
+      await deleteDoc(doc(db, 'meals', mealId));
+      await loadMeals();
+    } catch (err) {
+      console.error('Error deleting meal:', err);
+      setError('Failed to delete meal');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const resetForm = () => {
+    setFormData({
+      date: new Date().toISOString().split('T')[0],
+      type: 'breakfast',
+      mainDish: '',
+      sideDish: '',
+      fruit: '',
+      vegetable: '',
+      drink: '',
+      snack: '',
+      allergies: '',
+      notes: ''
     });
-    
-    return allergensInMeal;
+    setSelectedMeal(null);
+    setEditMode(false);
   };
-  
-  // Find affected children by allergens
-  const findAffectedChildren = (allergens) => {
-    if (allergens.length === 0) return [];
-    
-    return childrenAllergies.filter(child =>
-      child.allergies.some(allergy => 
-        allergy !== 'None' && allergens.includes(allergy)
-      )
+
+  const filteredMeals = meals.filter(meal => meal.date === selectedDate);
+
+  if (loading && meals.length === 0) {
+    return (
+      <div className="min-h-screen bg-base-200 flex justify-center items-center">
+        <span className="loading loading-spinner loading-lg text-primary"></span>
+      </div>
     );
-  };
-  
+  }
+
   return (
-    <div className="meal-planner">
-      <div className="page-header">
-        <h1>Meal Planner</h1>
-        <button 
-          className="allergy-info-btn"
-          onClick={() => setShowAllergyInfo(!showAllergyInfo)}
-        >
-          {showAllergyInfo ? 'Hide Allergy Info' : 'Show Allergy Info'}
-        </button>
-      </div>
-      
-      {showAllergyInfo && (
-        <div className="allergy-info">
-          <h2>Children with Food Allergies</h2>
-          <table className="allergy-table">
-            <thead>
-              <tr>
-                <th>Child</th>
-                <th>Allergies</th>
-              </tr>
-            </thead>
-            <tbody>
-              {childrenAllergies.map((child, index) => (
-                <tr key={index}>
-                  <td>{child.name}</td>
-                  <td>{child.allergies.join(', ')}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      )}
-      
-      <div className="week-navigation">
-        <button className="nav-btn" onClick={goToPreviousWeek}>
-          &lt; Previous Week
-        </button>
-        <h2>Weekly Meal Plan</h2>
-        <button className="nav-btn" onClick={goToNextWeek}>
-          Next Week &gt;
-        </button>
-      </div>
-      
-      <div className="meal-plan-grid">
-        <div className="meal-header-row">
-          <div className="meal-header empty-header"></div>
-          {weekDates.map((date, index) => (
-            <div key={index} className="day-header">
-              <h3>{formatDate(date)}</h3>
+    <div className="min-h-screen bg-base-200 p-6">
+      <div className="max-w-7xl mx-auto space-y-6">
+        <h1 className="text-4xl font-bold text-base-content">
+          <span className="text-primary">Meal</span> Planner
+        </h1>
+
+        {error && (
+          <div className="alert alert-error">
+            <svg xmlns="http://www.w3.org/2000/svg" className="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            <span>{error}</span>
+          </div>
+        )}
+
+        {/* Date Selector */}
+        <div className="card bg-base-100 shadow-xl">
+          <div className="card-body">
+            <div className="form-control">
+              <label className="label">
+                <span className="label-text">Select Date</span>
+              </label>
+              <input
+                type="date"
+                className="input input-bordered"
+                value={selectedDate}
+                onChange={(e) => setSelectedDate(e.target.value)}
+              />
             </div>
-          ))}
-        </div>
-        
-        <div className="meal-type-row">
-          <div className="meal-type-header">
-            <h3>Breakfast</h3>
-            <span className="meal-time">8:00 AM</span>
           </div>
-          
-          {weekDates.map((date, index) => {
-            const dateStr = date.toISOString().split('T')[0];
-            const meal = mealPlans[dateStr] && mealPlans[dateStr].breakfast ? mealPlans[dateStr].breakfast : null;
-            const allergensInMeal = meal ? checkForAllergies(meal) : [];
-            const affectedChildren = findAffectedChildren(allergensInMeal);
-            
-            return (
-              <div key={index} className="meal-cell">
-                {meal ? (
-                  <div className="meal-content">
-                    <div className="meal-items">
-                      <p className="meal-main">{meal.main}</p>
-                      {meal.side && <p className="meal-side">{meal.side}</p>}
-                      {meal.drink && <p className="meal-drink">{meal.drink}</p>}
-                    </div>
-                    
-                    {allergensInMeal.length > 0 && (
-                      <div className="allergen-warning">
-                        <span className="warning-icon">⚠️</span>
-                        <div className="allergen-details">
-                          <p>Contains: {allergensInMeal.join(', ')}</p>
-                          <p>Affects: {affectedChildren.map(child => child.name).join(', ')}</p>
-                        </div>
-                      </div>
-                    )}
-                    
-                    <button 
-                      className="edit-meal-btn"
-                      onClick={() => handleEditClick(dateStr, 'breakfast')}
-                    >
-                      Edit
-                    </button>
-                  </div>
-                ) : (
-                  <div className="empty-meal">
-                    <button 
-                      className="add-meal-btn"
-                      onClick={() => handleEditClick(dateStr, 'breakfast')}
-                    >
-                      Add Meal
-                    </button>
-                  </div>
-                )}
-              </div>
-            );
-          })}
         </div>
-        
-        <div className="meal-type-row">
-          <div className="meal-type-header">
-            <h3>Morning Snack</h3>
-            <span className="meal-time">10:00 AM</span>
-          </div>
-          
-          {weekDates.map((date, index) => {
-            const dateStr = date.toISOString().split('T')[0];
-            const meal = mealPlans[dateStr] && mealPlans[dateStr].snackAM ? mealPlans[dateStr].snackAM : null;
-            const allergensInMeal = meal ? checkForAllergies(meal) : [];
-            const affectedChildren = findAffectedChildren(allergensInMeal);
-            
-            return (
-              <div key={index} className="meal-cell">
-                {meal ? (
-                  <div className="meal-content">
-                    <div className="meal-items">
-                      <p className="meal-main">{meal.main}</p>
-                      {meal.side && <p className="meal-side">{meal.side}</p>}
-                    </div>
-                    
-                    {allergensInMeal.length > 0 && (
-                      <div className="allergen-warning">
-                        <span className="warning-icon">⚠️</span>
-                        <div className="allergen-details">
-                          <p>Contains: {allergensInMeal.join(', ')}</p>
-                          <p>Affects: {affectedChildren.map(child => child.name).join(', ')}</p>
-                        </div>
-                      </div>
-                    )}
-                    
-                    <button 
-                      className="edit-meal-btn"
-                      onClick={() => handleEditClick(dateStr, 'snackAM')}
-                    >
-                      Edit
-                    </button>
-                  </div>
-                ) : (
-                  <div className="empty-meal">
-                    <button 
-                      className="add-meal-btn"
-                      onClick={() => handleEditClick(dateStr, 'snackAM')}
-                    >
-                      Add Meal
-                    </button>
-                  </div>
-                )}
-              </div>
-            );
-          })}
-        </div>
-        
-        <div className="meal-type-row">
-          <div className="meal-type-header">
-            <h3>Lunch</h3>
-            <span className="meal-time">12:00 PM</span>
-          </div>
-          
-          {weekDates.map((date, index) => {
-            const dateStr = date.toISOString().split('T')[0];
-            const meal = mealPlans[dateStr] && mealPlans[dateStr].lunch ? mealPlans[dateStr].lunch : null;
-            const allergensInMeal = meal ? checkForAllergies(meal) : [];
-            const affectedChildren = findAffectedChildren(allergensInMeal);
-            
-            return (
-              <div key={index} className="meal-cell">
-                {meal ? (
-                  <div className="meal-content">
-                    <div className="meal-items">
-                      <p className="meal-main">{meal.main}</p>
-                      {meal.side && <p className="meal-side">{meal.side}</p>}
-                      {meal.dessert && <p className="meal-dessert">{meal.dessert}</p>}
-                    </div>
-                    
-                    {allergensInMeal.length > 0 && (
-                      <div className="allergen-warning">
-                        <span className="warning-icon">⚠️</span>
-                        <div className="allergen-details">
-                          <p>Contains: {allergensInMeal.join(', ')}</p>
-                          <p>Affects: {affectedChildren.map(child => child.name).join(', ')}</p>
-                        </div>
-                      </div>
-                    )}
-                    
-                    <button 
-                      className="edit-meal-btn"
-                      onClick={() => handleEditClick(dateStr, 'lunch')}
-                    >
-                      Edit
-                    </button>
-                  </div>
-                ) : (
-                  <div className="empty-meal">
-                    <button 
-                      className="add-meal-btn"
-                      onClick={() => handleEditClick(dateStr, 'lunch')}
-                    >
-                      Add Meal
-                    </button>
-                  </div>
-                )}
-              </div>
-            );
-          })}
-        </div>
-        
-        <div className="meal-type-row">
-          <div className="meal-type-header">
-            <h3>Afternoon Snack</h3>
-            <span className="meal-time">3:00 PM</span>
-          </div>
-          
-          {weekDates.map((date, index) => {
-            const dateStr = date.toISOString().split('T')[0];
-            const meal = mealPlans[dateStr] && mealPlans[dateStr].snackPM ? mealPlans[dateStr].snackPM : null;
-            const allergensInMeal = meal ? checkForAllergies(meal) : [];
-            const affectedChildren = findAffectedChildren(allergensInMeal);
-            
-            return (
-              <div key={index} className="meal-cell">
-                {meal ? (
-                  <div className="meal-content">
-                    <div className="meal-items">
-                      <p className="meal-main">{meal.main}</p>
-                      {meal.side && <p className="meal-side">{meal.side}</p>}
-                    </div>
-                    
-                    {allergensInMeal.length > 0 && (
-                      <div className="allergen-warning">
-                        <span className="warning-icon">⚠️</span>
-                        <div className="allergen-details">
-                          <p>Contains: {allergensInMeal.join(', ')}</p>
-                          <p>Affects: {affectedChildren.map(child => child.name).join(', ')}</p>
-                        </div>
-                      </div>
-                    )}
-                    
-                    <button 
-                      className="edit-meal-btn"
-                      onClick={() => handleEditClick(dateStr, 'snackPM')}
-                    >
-                      Edit
-                    </button>
-                  </div>
-                ) : (
-                  <div className="empty-meal">
-                    <button 
-                      className="add-meal-btn"
-                      onClick={() => handleEditClick(dateStr, 'snackPM')}
-                    >
-                      Add Meal
-                    </button>
-                  </div>
-                )}
-              </div>
-            );
-          })}
-        </div>
-      </div>
-      
-      <div className="action-buttons">
-        <button className="print-btn">Print Meal Plan</button>
-        <button className="email-btn">Email to Parents</button>
-      </div>
-      
-      {/* Edit Meal Modal */}
-      {editingMeal && (
-        <div className="modal-overlay">
-          <div className="modal">
-            <div className="modal-header">
-              <h2>
-                {formatDate(selectedDate)} - {
-                  editingMeal === 'breakfast' ? 'Breakfast' :
-                  editingMeal === 'snackAM' ? 'Morning Snack' :
-                  editingMeal === 'lunch' ? 'Lunch' : 'Afternoon Snack'
-                }
-              </h2>
-              <button 
-                className="close-btn"
-                onClick={() => setEditingMeal(null)}
-              >
-                &times;
-              </button>
-            </div>
-            
-            <form onSubmit={handleSubmit}>
-              <div className="form-group">
-                <label htmlFor="main">Main Item</label>
-                <input
-                  type="text"
-                  id="main"
-                  name="main"
-                  value={mealEdit.main}
-                  onChange={handleMealInputChange}
-                  required
-                />
-              </div>
-              
-              <div className="form-group">
-                <label htmlFor="side">Side Item</label>
-                <input
-                  type="text"
-                  id="side"
-                  name="side"
-                  value={mealEdit.side || ''}
-                  onChange={handleMealInputChange}
-                />
-              </div>
-              
-              {(editingMeal === 'breakfast') && (
-                <div className="form-group">
-                  <label htmlFor="drink">Drink</label>
+
+        {/* Meal Form */}
+        <div className="card bg-base-100 shadow-xl">
+          <div className="card-body">
+            <h2 className="card-title text-xl mb-4">
+              {editMode ? 'Edit Meal' : 'Add New Meal'}
+            </h2>
+
+            <form onSubmit={handleSubmit} className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="form-control">
+                  <label className="label">
+                    <span className="label-text">Date</span>
+                  </label>
                   <input
-                    type="text"
-                    id="drink"
-                    name="drink"
-                    value={mealEdit.drink || ''}
-                    onChange={handleMealInputChange}
+                    type="date"
+                    className="input input-bordered"
+                    value={formData.date}
+                    onChange={(e) => handleInputChange('date', e.target.value)}
+                    required
                   />
                 </div>
-              )}
-              
-              {(editingMeal === 'lunch') && (
-                <div className="form-group">
-                  <label htmlFor="dessert">Dessert</label>
+
+                <div className="form-control">
+                  <label className="label">
+                    <span className="label-text">Meal Type</span>
+                  </label>
+                  <select
+                    className="select select-bordered"
+                    value={formData.type}
+                    onChange={(e) => handleInputChange('type', e.target.value)}
+                    required
+                  >
+                    <option value="breakfast">Breakfast</option>
+                    <option value="lunch">Lunch</option>
+                    <option value="snack">Snack</option>
+                  </select>
+                </div>
+
+                <div className="form-control">
+                  <label className="label">
+                    <span className="label-text">Main Dish</span>
+                  </label>
                   <input
                     type="text"
-                    id="dessert"
-                    name="dessert"
-                    value={mealEdit.dessert || ''}
-                    onChange={handleMealInputChange}
+                    className="input input-bordered"
+                    value={formData.mainDish}
+                    onChange={(e) => handleInputChange('mainDish', e.target.value)}
+                    required
                   />
                 </div>
-              )}
-              
-              <div className="form-actions">
-                <button type="submit" className="submit-btn">Save Meal</button>
-                <button 
-                  type="button" 
-                  className="cancel-btn"
-                  onClick={() => setEditingMeal(null)}
+
+                <div className="form-control">
+                  <label className="label">
+                    <span className="label-text">Side Dish</span>
+                  </label>
+                  <input
+                    type="text"
+                    className="input input-bordered"
+                    value={formData.sideDish}
+                    onChange={(e) => handleInputChange('sideDish', e.target.value)}
+                  />
+                </div>
+
+                <div className="form-control">
+                  <label className="label">
+                    <span className="label-text">Fruit</span>
+                  </label>
+                  <input
+                    type="text"
+                    className="input input-bordered"
+                    value={formData.fruit}
+                    onChange={(e) => handleInputChange('fruit', e.target.value)}
+                  />
+                </div>
+
+                <div className="form-control">
+                  <label className="label">
+                    <span className="label-text">Vegetable</span>
+                  </label>
+                  <input
+                    type="text"
+                    className="input input-bordered"
+                    value={formData.vegetable}
+                    onChange={(e) => handleInputChange('vegetable', e.target.value)}
+                  />
+                </div>
+
+                <div className="form-control">
+                  <label className="label">
+                    <span className="label-text">Drink</span>
+                  </label>
+                  <input
+                    type="text"
+                    className="input input-bordered"
+                    value={formData.drink}
+                    onChange={(e) => handleInputChange('drink', e.target.value)}
+                  />
+                </div>
+
+                <div className="form-control">
+                  <label className="label">
+                    <span className="label-text">Snack</span>
+                  </label>
+                  <input
+                    type="text"
+                    className="input input-bordered"
+                    value={formData.snack}
+                    onChange={(e) => handleInputChange('snack', e.target.value)}
+                  />
+                </div>
+
+                <div className="form-control md:col-span-2">
+                  <label className="label">
+                    <span className="label-text">Allergy Information</span>
+                  </label>
+                  <textarea
+                    className="textarea textarea-bordered h-24"
+                    value={formData.allergies}
+                    onChange={(e) => handleInputChange('allergies', e.target.value)}
+                    placeholder="List any allergens..."
+                  ></textarea>
+                </div>
+
+                <div className="form-control md:col-span-2">
+                  <label className="label">
+                    <span className="label-text">Notes</span>
+                  </label>
+                  <textarea
+                    className="textarea textarea-bordered h-24"
+                    value={formData.notes}
+                    onChange={(e) => handleInputChange('notes', e.target.value)}
+                    placeholder="Additional notes..."
+                  ></textarea>
+                </div>
+              </div>
+
+              <div className="flex justify-end gap-2">
+                {editMode && (
+                  <button
+                    type="button"
+                    className="btn btn-ghost"
+                    onClick={resetForm}
+                  >
+                    Cancel
+                  </button>
+                )}
+                <button
+                  type="submit"
+                  className={`btn btn-primary ${loading ? 'loading' : ''}`}
+                  disabled={loading}
                 >
-                  Cancel
+                  {editMode ? 'Update Meal' : 'Add Meal'}
                 </button>
               </div>
             </form>
           </div>
         </div>
-      )}
+
+        {/* Meal List */}
+        <div className="card bg-base-100 shadow-xl">
+          <div className="card-body">
+            <h2 className="card-title text-xl mb-4">
+              Meals for {new Date(selectedDate).toLocaleDateString()}
+            </h2>
+
+            {filteredMeals.length === 0 ? (
+              <div className="text-center py-8 text-base-content/70">
+                No meals planned for this date
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {filteredMeals.map((meal) => (
+                  <div key={meal.id} className="card bg-base-200">
+                    <div className="card-body">
+                      <div className="flex justify-between items-start">
+                        <div>
+                          <h3 className="font-bold capitalize">{meal.type}</h3>
+                          <div className="mt-2 space-y-1">
+                            {meal.mainDish && (
+                              <p><span className="font-medium">Main:</span> {meal.mainDish}</p>
+                            )}
+                            {meal.sideDish && (
+                              <p><span className="font-medium">Side:</span> {meal.sideDish}</p>
+                            )}
+                            {meal.fruit && (
+                              <p><span className="font-medium">Fruit:</span> {meal.fruit}</p>
+                            )}
+                            {meal.vegetable && (
+                              <p><span className="font-medium">Vegetable:</span> {meal.vegetable}</p>
+                            )}
+                            {meal.drink && (
+                              <p><span className="font-medium">Drink:</span> {meal.drink}</p>
+                            )}
+                            {meal.snack && (
+                              <p><span className="font-medium">Snack:</span> {meal.snack}</p>
+                            )}
+                          </div>
+                          {meal.allergies && (
+                            <div className="mt-4">
+                              <p className="text-sm font-medium text-error">Allergens:</p>
+                              <p className="text-sm">{meal.allergies}</p>
+                            </div>
+                          )}
+                          {meal.notes && (
+                            <div className="mt-4">
+                              <p className="text-sm font-medium">Notes:</p>
+                              <p className="text-sm">{meal.notes}</p>
+                            </div>
+                          )}
+                        </div>
+                        <div className="join join-vertical">
+                          <button
+                            className="btn btn-ghost btn-sm join-item"
+                            onClick={() => handleEdit(meal)}
+                          >
+                            Edit
+                          </button>
+                          <button
+                            className="btn btn-ghost btn-sm join-item text-error"
+                            onClick={() => handleDelete(meal.id)}
+                          >
+                            Delete
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
     </div>
   );
 };

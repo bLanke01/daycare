@@ -1,4 +1,4 @@
-// components/admin/ActivityLog.js
+// app/admin/activity-log/page.js
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -337,161 +337,176 @@ const ActivityLog = () => {
   };
 
   return (
-    <div className="activity-log">
-      <div className="page-header">
-        <h1>📝  Activity Log</h1>
+    <div className="min-h-screen p-4 space-y-6">
+      <div className="flex flex-col sm:flex-row justify-between items-center mb-6">
+        <h1 className="text-3xl font-bold">📝 Activity Log</h1>
         <button 
-          className="add-activity-btn"
+          className="btn btn-primary"
           onClick={() => setShowForm(true)}
         >
           ➕ Record New Activity
         </button>
       </div>
 
-      {error && <div className="error-message">{error}</div>}
+      {error && <div className="alert alert-error">{error}</div>}
 
       {/* Filters */}
-      <div className="filters-section">
-        <div className="filter-group">
-          <label>Child:</label>
-          <select value={filterChild} onChange={(e) => setFilterChild(e.target.value)}>
-            <option value="All">All Children</option>
-            {children.map(child => (
-              <option key={child.id} value={child.id}>
-                {child.firstName} {child.lastName}
-              </option>
-            ))}
-          </select>
+      <div className="card bg-base-200 p-4">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="form-control">
+            <label className="label">Child:</label>
+            <select 
+              className="select select-bordered w-full"
+              value={filterChild} 
+              onChange={(e) => setFilterChild(e.target.value)}
+            >
+              <option value="All">All Children</option>
+              {children.map(child => (
+                <option key={child.id} value={child.id}>
+                  {child.firstName} {child.lastName}
+                </option>
+              ))}
+            </select>
+          </div>
+          
+          <div className="form-control">
+            <label className="label">Activity Type:</label>
+            <select 
+              className="select select-bordered w-full"
+              value={filterType} 
+              onChange={(e) => setFilterType(e.target.value)}
+            >
+              <option value="All">All Types</option>
+              {Object.keys(activityTypes).map(type => (
+                <option key={type} value={type}>
+                  {activityTypes[type].icon} {type}
+                </option>
+              ))}
+            </select>
+          </div>
+          
+          <div className="form-control">
+            <label className="label">Date:</label>
+            <input
+              type="date"
+              className="input input-bordered w-full"
+              value={filterDate}
+              onChange={(e) => setFilterDate(e.target.value)}
+            />
+          </div>
         </div>
         
-        <div className="filter-group">
-          <label>Activity Type:</label>
-          <select value={filterType} onChange={(e) => setFilterType(e.target.value)}>
-            <option value="All">All Types</option>
-            {Object.keys(activityTypes).map(type => (
-              <option key={type} value={type}>
-                {activityTypes[type].icon} {type}
-              </option>
-            ))}
-          </select>
+        <div className="mt-4 flex justify-end">
+          <button 
+            className="btn btn-ghost"
+            onClick={() => {
+              setFilterChild('All');
+              setFilterType('All');
+              setFilterDate('');
+            }}
+          >
+            Clear Filters
+          </button>
         </div>
-        
-        <div className="filter-group">
-          <label>Date:</label>
-          <input
-            type="date"
-            value={filterDate}
-            onChange={(e) => setFilterDate(e.target.value)}
-          />
-        </div>
-        
-        <button 
-          className="clear-filters"
-          onClick={() => {
-            setFilterChild('All');
-            setFilterType('All');
-            setFilterDate('');
-          }}
-        >
-          Clear Filters
-        </button>
       </div>
 
       {/* Activities Display */}
-      <div className="activities-container">
+      <div className="space-y-8">
         {loading ? (
-          <div className="loading">Loading activities...</div>
+          <div className="flex justify-center">
+            <span className="loading loading-spinner loading-lg"></span>
+          </div>
         ) : Object.keys(groupedActivities).length === 0 ? (
-          <div className="no-activities">
-            <p>No activities found matching your filters.</p>
+          <div className="text-center py-8">
+            <div className="card bg-base-200 p-8">
+              <p className="text-lg">No activities found matching your filters.</p>
+            </div>
           </div>
         ) : (
           Object.entries(groupedActivities)
             .sort(([a], [b]) => new Date(b) - new Date(a))
             .map(([date, dayActivities]) => (
-              <div key={date} className="day-group">
-                <h2 className="day-header">{formatDate(date)}</h2>
-                <div className="activities-grid">
+              <div key={date} className="space-y-4">
+                <h2 className="text-2xl font-bold divider">{formatDate(date)}</h2>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                   {dayActivities.map(activity => (
                     <div 
                       key={activity.id} 
-                      className="activity-card"
+                      className="card bg-base-100 shadow-xl"
                       style={{ borderLeft: `4px solid ${activityTypes[activity.activityType]?.color || '#ccc'}` }}
                     >
-                      <div className="activity-header">
-                        <div className="activity-type-badge">
-                          <span className="type-icon">
+                      <div className="card-body">
+                        <div className="flex items-center gap-2 mb-2">
+                          <span className="text-2xl">
                             {activityTypes[activity.activityType]?.icon || '📝'}
                           </span>
-                          <div className="type-info">
-                            <span className="main-type">{activity.activityType}</span>
+                          <div>
+                            <h3 className="font-bold">{activity.activityType}</h3>
                             {activity.activitySubType && (
-                              <span className="sub-type">{activity.activitySubType}</span>
+                              <p className="text-sm opacity-70">{activity.activitySubType}</p>
                             )}
                           </div>
                         </div>
-                        <div className="activity-meta">
-                          <span className="child-name">{activity.childName}</span>
-                          <span className="activity-time">{activity.time}</span>
-                        </div>
-                      </div>
 
-                      <div className="activity-content">
-                        <h3 className="activity-title">{activity.title}</h3>
-                        <p className="activity-description">{activity.description}</p>
+                        <div className="flex justify-between items-center mb-4">
+                          <span className="badge badge-lg">{activity.childName}</span>
+                          <span className="text-sm opacity-70">{activity.time}</span>
+                        </div>
+
+                        <h4 className="font-semibold text-lg mb-2">{activity.title}</h4>
+                        <p className="text-sm mb-4">{activity.description}</p>
 
                         {activity.skillsObserved.length > 0 && (
-                          <div className="skills-observed">
-                            <h4>Skills Observed:</h4>
-                            <div className="skills-tags">
+                          <div className="mb-4">
+                            <h5 className="font-semibold mb-2">Skills Observed:</h5>
+                            <div className="flex flex-wrap gap-2">
                               {activity.skillsObserved.map(skill => (
-                                <span key={skill} className="skill-tag">{skill}</span>
+                                <span key={skill} className="badge badge-primary">{skill}</span>
                               ))}
                             </div>
                           </div>
                         )}
 
-                        <div className="activity-indicators">
+                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 mb-4">
                           <div className="indicator">
-                            <span className="label">Development:</span>
-                            <span className={`badge development-${activity.developmentLevel}`}>
+                            <span className="text-sm">Development:</span>
+                            <span className="badge badge-ghost">
                               {developmentLevels.find(l => l.value === activity.developmentLevel)?.label.split(' - ')[0]}
                             </span>
                           </div>
                           
                           <div className="indicator">
-                            <span className="label">Participation:</span>
-                            <span className={`badge participation-${activity.participationLevel}`}>
+                            <span className="text-sm">Participation:</span>
+                            <span className="badge badge-ghost">
                               {participationLevels.find(l => l.value === activity.participationLevel)?.label}
                             </span>
                           </div>
                           
                           <div className="indicator">
-                            <span className="label">Enjoyment:</span>
-                            <span className={`badge enjoyment-${activity.enjoymentLevel}`}>
+                            <span className="text-sm">Enjoyment:</span>
+                            <span className="badge badge-ghost">
                               {enjoymentLevels.find(l => l.value === activity.enjoymentLevel)?.label}
                             </span>
                           </div>
                         </div>
 
                         {activity.duration && (
-                          <div className="activity-duration">
-                            <span className="label">Duration:</span>
-                            <span className="value">{activity.duration}</span>
+                          <div className="text-sm opacity-70">
+                            Duration: {activity.duration}
                           </div>
                         )}
 
                         {activity.nextSteps && (
-                          <div className="next-steps">
-                            <h4>Next Steps:</h4>
-                            <p>{activity.nextSteps}</p>
+                          <div className="mt-4">
+                            <h5 className="font-semibold">Next Steps:</h5>
+                            <p className="text-sm">{activity.nextSteps}</p>
                           </div>
                         )}
 
                         {activity.notes && (
-                          <div className="activity-notes">
-                            <h4>Additional Notes:</h4>
-                            <p>{activity.notes}</p>
+                          <div className="mt-4">
+                            <h5 className="font-semibold">Additional Notes:</h5>
+                            <p className="text-sm">{activity.notes}</p>
                           </div>
                         )}
                       </div>
@@ -505,27 +520,28 @@ const ActivityLog = () => {
 
       {/* Activity Form Modal */}
       {showForm && (
-        <div className="modal-overlay">
-          <div className="modal large-modal">
-            <div className="modal-header">
-              <h2>📝 Record New Activity</h2>
+        <div className="modal modal-open">
+          <div className="modal-box max-w-4xl">
+            <div className="flex justify-between items-center mb-6">
+              <h2 className="text-2xl font-bold">📝 Record New Activity</h2>
               <button 
-                className="close-btn"
+                className="btn btn-sm btn-circle btn-ghost"
                 onClick={() => setShowForm(false)}
               >
-                ×
+                ✕
               </button>
             </div>
 
-            <form onSubmit={handleSubmit} className="activity-form">
+            <form onSubmit={handleSubmit} className="space-y-6">
               {/* Basic Information */}
-              <div className="form-section">
-                <h3>Basic Information</h3>
+              <div className="card bg-base-200 p-4">
+                <h3 className="font-bold mb-4">Basic Information</h3>
                 
-                <div className="form-row">
-                  <div className="form-group">
-                    <label>Child *</label>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div className="form-control">
+                    <label className="label">Child *</label>
                     <select
+                      className="select select-bordered w-full"
                       name="childId"
                       value={newActivity.childId}
                       onChange={handleInputChange}
@@ -540,10 +556,11 @@ const ActivityLog = () => {
                     </select>
                   </div>
                   
-                  <div className="form-group">
-                    <label>Date *</label>
+                  <div className="form-control">
+                    <label className="label">Date *</label>
                     <input
                       type="date"
+                      className="input input-bordered w-full"
                       name="date"
                       value={newActivity.date}
                       onChange={handleInputChange}
@@ -551,10 +568,11 @@ const ActivityLog = () => {
                     />
                   </div>
                   
-                  <div className="form-group">
-                    <label>Time *</label>
+                  <div className="form-control">
+                    <label className="label">Time *</label>
                     <input
                       type="time"
+                      className="input input-bordered w-full"
                       name="time"
                       value={newActivity.time}
                       onChange={handleInputChange}
@@ -563,10 +581,11 @@ const ActivityLog = () => {
                   </div>
                 </div>
 
-                <div className="form-row">
-                  <div className="form-group">
-                    <label>Activity Type *</label>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
+                  <div className="form-control">
+                    <label className="label">Activity Type *</label>
                     <select
+                      className="select select-bordered w-full"
                       name="activityType"
                       value={newActivity.activityType}
                       onChange={handleInputChange}
@@ -580,9 +599,10 @@ const ActivityLog = () => {
                     </select>
                   </div>
                   
-                  <div className="form-group">
-                    <label>Specific Activity</label>
+                  <div className="form-control">
+                    <label className="label">Specific Activity</label>
                     <select
+                      className="select select-bordered w-full"
                       name="activitySubType"
                       value={newActivity.activitySubType}
                       onChange={handleInputChange}
@@ -596,10 +616,11 @@ const ActivityLog = () => {
                     </select>
                   </div>
                   
-                  <div className="form-group">
-                    <label>Duration</label>
+                  <div className="form-control">
+                    <label className="label">Duration</label>
                     <input
                       type="text"
+                      className="input input-bordered w-full"
                       name="duration"
                       value={newActivity.duration}
                       onChange={handleInputChange}
@@ -610,13 +631,14 @@ const ActivityLog = () => {
               </div>
 
               {/* Activity Details */}
-              <div className="form-section">
-                <h3>Activity Details</h3>
+              <div className="card bg-base-200 p-4">
+                <h3 className="font-bold mb-4">Activity Details</h3>
                 
-                <div className="form-group">
-                  <label>Activity Title *</label>
+                <div className="form-control mb-4">
+                  <label className="label">Activity Title *</label>
                   <input
                     type="text"
+                    className="input input-bordered w-full"
                     name="title"
                     value={newActivity.title}
                     onChange={handleInputChange}
@@ -625,13 +647,13 @@ const ActivityLog = () => {
                   />
                 </div>
                 
-                <div className="form-group">
-                  <label>Description *</label>
+                <div className="form-control">
+                  <label className="label">Description *</label>
                   <textarea
+                    className="textarea textarea-bordered h-24"
                     name="description"
                     value={newActivity.description}
                     onChange={handleInputChange}
-                    rows="3"
                     placeholder="Describe what the child did during this activity..."
                     required
                   />
@@ -639,31 +661,33 @@ const ActivityLog = () => {
               </div>
 
               {/* Assessment */}
-              <div className="form-section">
-                <h3>Assessment & Observations</h3>
+              <div className="card bg-base-200 p-4">
+                <h3 className="font-bold mb-4">Assessment & Observations</h3>
                 
-                <div className="form-group">
-                  <label>Skills Observed</label>
-                  <div className="checkbox-grid">
+                <div className="form-control mb-4">
+                  <label className="label">Skills Observed</label>
+                  <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-2">
                     {skillCategories.map(skill => (
-                      <label key={skill} className="checkbox-label">
+                      <label key={skill} className="flex items-center gap-2">
                         <input
                           type="checkbox"
+                          className="checkbox"
                           name="skillsObserved"
                           value={skill}
                           checked={newActivity.skillsObserved.includes(skill)}
                           onChange={handleInputChange}
                         />
-                        {skill}
+                        <span className="text-sm">{skill}</span>
                       </label>
                     ))}
                   </div>
                 </div>
 
-                <div className="form-row">
-                  <div className="form-group">
-                    <label>Development Level *</label>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div className="form-control">
+                    <label className="label">Development Level *</label>
                     <select
+                      className="select select-bordered w-full"
                       name="developmentLevel"
                       value={newActivity.developmentLevel}
                       onChange={handleInputChange}
@@ -677,9 +701,10 @@ const ActivityLog = () => {
                     </select>
                   </div>
                   
-                  <div className="form-group">
-                    <label>Participation Level *</label>
+                  <div className="form-control">
+                    <label className="label">Participation Level *</label>
                     <select
+                      className="select select-bordered w-full"
                       name="participationLevel"
                       value={newActivity.participationLevel}
                       onChange={handleInputChange}
@@ -693,9 +718,10 @@ const ActivityLog = () => {
                     </select>
                   </div>
                   
-                  <div className="form-group">
-                    <label>Enjoyment Level *</label>
+                  <div className="form-control">
+                    <label className="label">Enjoyment Level *</label>
                     <select
+                      className="select select-bordered w-full"
                       name="enjoymentLevel"
                       value={newActivity.enjoymentLevel}
                       onChange={handleInputChange}
@@ -712,39 +738,39 @@ const ActivityLog = () => {
               </div>
 
               {/* Additional Information */}
-              <div className="form-section">
-                <h3>Additional Information</h3>
+              <div className="card bg-base-200 p-4">
+                <h3 className="font-bold mb-4">Additional Information</h3>
                 
-                <div className="form-group">
-                  <label>Next Steps/Recommendations</label>
+                <div className="form-control mb-4">
+                  <label className="label">Next Steps/Recommendations</label>
                   <textarea
+                    className="textarea textarea-bordered h-20"
                     name="nextSteps"
                     value={newActivity.nextSteps}
                     onChange={handleInputChange}
-                    rows="2"
                     placeholder="What should be done next to support this child's development?"
                   />
                 </div>
                 
-                <div className="form-group">
-                  <label>Additional Notes</label>
+                <div className="form-control">
+                  <label className="label">Additional Notes</label>
                   <textarea
+                    className="textarea textarea-bordered h-20"
                     name="notes"
                     value={newActivity.notes}
                     onChange={handleInputChange}
-                    rows="3"
                     placeholder="Any other observations, behaviors, or important details..."
                   />
                 </div>
               </div>
 
-              <div className="form-actions">
-                <button type="submit" className="submit-btn" disabled={loading}>
+              <div className="modal-action">
+                <button type="submit" className="btn btn-primary" disabled={loading}>
                   {loading ? 'Recording...' : '📝 Record Activity'}
                 </button>
                 <button 
                   type="button" 
-                  className="cancel-btn"
+                  className="btn btn-ghost"
                   onClick={() => setShowForm(false)}
                 >
                   Cancel

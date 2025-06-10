@@ -1,36 +1,31 @@
-// components/admin/PaymentManagement.js - Updated with notification integration
 'use client';
 
 import { useState, useEffect } from 'react';
-import { collection, query, getDocs, doc, updateDoc, addDoc, deleteDoc, where, getDoc } from 'firebase/firestore';
+import { collection, getDocs, addDoc, updateDoc, deleteDoc, doc, query, where } from 'firebase/firestore';
 import { db } from '../../firebase/config';
-import { notificationService } from '../../services/NotificationService';
 
 export default function PaymentManagement() {
   const [parents, setParents] = useState([]);
   const [payments, setPayments] = useState([]);
-  const [selectedParent, setSelectedParent] = useState(null);
-  const [selectedPayment, setSelectedPayment] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [showInvoiceForm, setShowInvoiceForm] = useState(false);
-  const [dateRange, setDateRange] = useState('');
-  const [statusFilter, setStatusFilter] = useState('All');
-  const [paymentMethodFilter, setPaymentMethodFilter] = useState('All');
-  const [selectedRows, setSelectedRows] = useState([]);
-  const [isEditing, setIsEditing] = useState(false);
+  const [error, setError] = useState(null);
+  const [selectedPayment, setSelectedPayment] = useState(null);
+  const [selectedRows, setSelectedRows] = useState(new Set());
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [filterStatus, setFilterStatus] = useState('all');
+
+  // Form state
   const [invoiceData, setInvoiceData] = useState({
-    items: [{ description: '', quantity: 1, rate: 0, total: 0 }],
-    dueDate: new Date().toISOString().split('T')[0],
+    parentId: '',
+    amount: '',
+    dueDate: '',
+    items: [{ description: '', amount: '' }],
     notes: ''
   });
 
-  // Notification states
-  const [sendingNotifications, setSendingNotifications] = useState(false);
-  const [notificationStatus, setNotificationStatus] = useState('');
-
   useEffect(() => {
-    fetchParents();
-    fetchPayments();
+    Promise.all([fetchParents(), fetchPayments()]);
   }, []);
 
   const fetchParents = async () => {
@@ -43,610 +38,679 @@ export default function PaymentManagement() {
         parentsList.push({ id: doc.id, ...doc.data() });
       });
       setParents(parentsList);
-    } catch (error) {
-      console.error('Error fetching parents:', error);
+    } catch (err) {
+      console.error('Error fetching parents:', err);
+      setError('Failed to load parents');
     }
   };
 
   const fetchPayments = async () => {
     try {
-      const paymentsRef = collection(db, 'invoices');
-      const snapshot = await getDocs(paymentsRef);
+      setLoading(true);
+      const snapshot = await getDocs(collection(db, 'invoices'));
       const paymentsList = [];
       snapshot.forEach((doc) => {
         paymentsList.push({ id: doc.id, ...doc.data() });
       });
       setPayments(paymentsList);
+    } catch (err) {
+      console.error('Error fetching payments:', err);
+      setError('Failed to load payments');
+    } finally {
       setLoading(false);
-    } catch (error) {
-      console.error('Error fetching payments:', error);
     }
   };
 
-  // Send notification for new invoice
   const sendInvoiceNotification = async (invoiceData, parentData) => {
     try {
-      setSendingNotifications(true);
-      setNotificationStatus('📧 Sending invoice notification to parent...');
-      
-      console.log('🔍 Sending notification with invoice data:', {
-        id: invoiceData.id,
-        invoiceNo: invoiceData.invoiceNo,
-        totalAmount: invoiceData.totalAmount,
-        parentName: invoiceData.parentName,
-        parentEmail: parentData.email
+      await addDoc(collection(db, 'notifications'), {
+        type: 'invoice',
+        recipientId: parentData.id,
+        recipientName: `${parentData.firstName} ${parentData.lastName}`,
+        title: 'New Invoice Generated',
+        message: `A new invoice for $${invoiceData.totalAmount} has been generated for your account.`,
+        amount: invoiceData.totalAmount,
+        dueDate: invoiceData.dueDate,
+        status: 'unread',
+        createdAt: new Date().toISOString()
       });
-      
-      await notificationService.notifyParentNewInvoice(invoiceData, parentData);
-      
-      setNotificationStatus('✅ Invoice notification sent successfully!');
-      
-      setTimeout(() => {
-        setNotificationStatus('');
-        setSendingNotifications(false);
-      }, 3000);
-    } catch (error) {
-      console.error('❌ Error sending invoice notification:', error);
-      setNotificationStatus(`❌ Error sending notification: ${error.message}`);
-      setTimeout(() => {
-        setNotificationStatus('');
-        setSendingNotifications(false);
-      }, 5000);
+    } catch (err) {
+      console.error('Error sending invoice notification:', err);
+      throw new Error('Failed to send notification');
     }
   };
 
-  // Send notification for paid invoice
   const sendPaymentConfirmationNotification = async (invoiceData, parentData) => {
     try {
-      setSendingNotifications(true);
-      setNotificationStatus('📧 Sending payment confirmation to parent...');
-      
-      console.log('🔍 Sending payment confirmation with data:', {
-        id: invoiceData.id,
-        invoiceNo: invoiceData.invoiceNo,
-        totalAmount: invoiceData.totalAmount,
-        parentName: invoiceData.parentName,
-        parentEmail: parentData.email,
-        paidAt: invoiceData.paidAt
+      await addDoc(collection(db, 'notifications'), {
+        type: 'payment_confirmation',
+        recipientId: parentData.id,
+        recipientName: `${parentData.firstName} ${parentData.lastName}`,
+        title: 'Payment Received',
+        message: `Your payment of $${invoiceData.totalAmount} has been received. Thank you!`,
+        amount: invoiceData.totalAmount,
+        status: 'unread',
+        createdAt: new Date().toISOString()
       });
-      
-      await notificationService.notifyParentInvoicePaid(invoiceData, parentData);
-      
-      setNotificationStatus('✅ Payment confirmation sent successfully!');
-      
-      setTimeout(() => {
-        setNotificationStatus('');
-        setSendingNotifications(false);
-      }, 3000);
-    } catch (error) {
-      console.error('❌ Error sending payment confirmation:', error);
-      setNotificationStatus(`❌ Error sending confirmation: ${error.message}`);
-      setTimeout(() => {
-        setNotificationStatus('');
-        setSendingNotifications(false);
-      }, 5000);
+    } catch (err) {
+      console.error('Error sending payment confirmation:', err);
+      throw new Error('Failed to send confirmation');
     }
   };
 
   const handleInvoiceSubmit = async (e) => {
     e.preventDefault();
-    if (!selectedParent) return;
-
+    
     try {
-      const subTotal = invoiceData.items.reduce((sum, item) => sum + (item.total || 0), 0);
-      const totalAmount = subTotal; // For now, total = subtotal (no taxes/fees)
+      setLoading(true);
+      setError(null);
 
-      const invoice = {
-        ...invoiceData,
-        parentId: selectedParent.id,
-        parentName: selectedParent.name || `${selectedParent.firstName} ${selectedParent.lastName}` || selectedParent.email,
+      const parent = parents.find(p => p.id === invoiceData.parentId);
+      if (!parent) {
+        throw new Error('Parent not found');
+      }
+
+      const totalAmount = invoiceData.items.reduce((sum, item) => sum + Number(item.amount), 0);
+      
+      const paymentData = {
+        parentId: invoiceData.parentId,
+        parentName: `${parent.firstName} ${parent.lastName}`,
+        totalAmount: totalAmount,
+        subTotal: totalAmount,
+        dueDate: invoiceData.dueDate,
+        items: invoiceData.items.map(item => ({
+          description: item.description,
+          rate: Number(item.amount),
+          quantity: 1,
+          total: Number(item.amount)
+        })),
+        notes: invoiceData.notes,
         status: 'pending',
         createdAt: new Date().toISOString(),
         invoiceNo: `INV-${Date.now()}`,
-        subTotal: subTotal,
-        totalAmount: totalAmount,
-        paymentEmail: 'payments@daycare.com' // Replace with actual admin e-transfer email
+        paymentEmail: 'payments@daycare.com'
       };
 
-      console.log('🔍 Creating invoice with data:', {
-        totalAmount: invoice.totalAmount,
-        subTotal: invoice.subTotal,
-        itemsCount: invoice.items?.length,
-        parentName: invoice.parentName
-      });
-
-      const docRef = await addDoc(collection(db, 'invoices'), invoice);
-      const newInvoice = { ...invoice, id: docRef.id };
+      const docRef = await addDoc(collection(db, 'invoices'), paymentData);
       
-      setShowInvoiceForm(false);
-      setSelectedParent(null);
+      await sendInvoiceNotification(paymentData, parent);
+
+      setPayments(prev => [...prev, { id: docRef.id, ...paymentData }]);
+      
+      // Reset form
       setInvoiceData({
-        items: [{ description: '', quantity: 1, rate: 0, total: 0 }],
-        dueDate: new Date().toISOString().split('T')[0],
+        parentId: '',
+        dueDate: '',
+        items: [{ description: '', amount: '' }],
         notes: ''
       });
-      
-      await fetchPayments();
-      
-      // Send notification to parent
-      await sendInvoiceNotification(newInvoice, selectedParent);
-      
-    } catch (error) {
-      console.error('Error creating invoice:', error);
-      setNotificationStatus('❌ Error creating invoice');
-      setTimeout(() => setNotificationStatus(''), 5000);
+
+    } catch (err) {
+      console.error('Error creating invoice:', err);
+      setError('Failed to create invoice');
+    } finally {
+      setLoading(false);
     }
   };
 
   const handleItemChange = (index, field, value) => {
-    const newItems = [...invoiceData.items];
-    newItems[index] = { ...newItems[index], [field]: value };
-    
-    if (field === 'quantity' || field === 'rate') {
-      newItems[index].total = newItems[index].quantity * newItems[index].rate;
-    }
-    
-    setInvoiceData({ ...invoiceData, items: newItems });
+    setInvoiceData(prev => {
+      const newItems = [...prev.items];
+      newItems[index] = {
+        ...newItems[index],
+        [field]: value
+      };
+      return {
+        ...prev,
+        items: newItems
+      };
+    });
   };
 
   const addItem = () => {
-    setInvoiceData({
-      ...invoiceData,
-      items: [...invoiceData.items, { description: '', quantity: 1, rate: 0, total: 0 }]
-    });
+    setInvoiceData(prev => ({
+      ...prev,
+      items: [...prev.items, { description: '', amount: '' }]
+    }));
   };
 
   const removeItem = (index) => {
-    const newItems = invoiceData.items.filter((_, i) => i !== index);
-    setInvoiceData({ ...invoiceData, items: newItems });
+    setInvoiceData(prev => ({
+      ...prev,
+      items: prev.items.filter((_, i) => i !== index)
+    }));
   };
 
   const handleEdit = (payment) => {
+    setSelectedPayment(payment);
     setInvoiceData({
-      items: payment.items || [],
+      parentId: payment.parentId,
+      amount: payment.amount,
       dueDate: payment.dueDate,
+      items: payment.items || [{ description: '', amount: payment.amount }],
       notes: payment.notes || ''
     });
-    setSelectedParent(parents.find(p => p.id === payment.parentId));
-    setIsEditing(true);
-    setSelectedPayment(payment);
+    setShowEditModal(true);
   };
 
   const handleUpdate = async () => {
     try {
-      const paymentRef = doc(db, 'invoices', selectedPayment.id);
-      await updateDoc(paymentRef, {
-        ...invoiceData,
-        totalAmount: invoiceData.items.reduce((sum, item) => sum + item.total, 0),
-        subTotal: invoiceData.items.reduce((sum, item) => sum + item.total, 0)
-      });
-      fetchPayments();
-      setIsEditing(false);
+      setLoading(true);
+      setError(null);
+
+      const totalAmount = invoiceData.items.reduce((sum, item) => sum + Number(item.amount), 0);
+      
+      const updatedData = {
+        totalAmount: totalAmount,
+        subTotal: totalAmount,
+        dueDate: invoiceData.dueDate,
+        items: invoiceData.items.map(item => ({
+          description: item.description,
+          rate: Number(item.amount),
+          quantity: 1,
+          total: Number(item.amount)
+        })),
+        notes: invoiceData.notes,
+        updatedAt: new Date().toISOString()
+      };
+
+      await updateDoc(doc(db, 'invoices', selectedPayment.id), updatedData);
+
+      setPayments(prev => prev.map(p => 
+        p.id === selectedPayment.id 
+          ? { ...p, ...updatedData }
+          : p
+      ));
+
+      setShowEditModal(false);
       setSelectedPayment(null);
-      setNotificationStatus('📝 Invoice updated successfully');
-      setTimeout(() => setNotificationStatus(''), 3000);
-    } catch (error) {
-      console.error('Error updating invoice:', error);
-      setNotificationStatus('❌ Error updating invoice');
-      setTimeout(() => setNotificationStatus(''), 5000);
+    } catch (err) {
+      console.error('Error updating payment:', err);
+      setError('Failed to update payment');
+    } finally {
+      setLoading(false);
     }
   };
 
   const handleDelete = async (paymentId) => {
-    if (!window.confirm('Are you sure you want to delete this invoice?')) return;
+    if (!confirm('Are you sure you want to delete this payment?')) return;
 
     try {
+      setLoading(true);
+      setError(null);
+
       await deleteDoc(doc(db, 'invoices', paymentId));
-      fetchPayments();
-      setSelectedPayment(null);
-      setNotificationStatus('🗑️ Invoice deleted successfully');
-      setTimeout(() => setNotificationStatus(''), 3000);
-    } catch (error) {
-      console.error('Error deleting invoice:', error);
-      setNotificationStatus('❌ Error deleting invoice');
-      setTimeout(() => setNotificationStatus(''), 5000);
+      setPayments(prev => prev.filter(p => p.id !== paymentId));
+
+    } catch (err) {
+      console.error('Error deleting payment:', err);
+      setError('Failed to delete payment');
+    } finally {
+      setLoading(false);
     }
   };
 
   const markAsPaid = async (paymentId) => {
     try {
-      const paymentRef = doc(db, 'invoices', paymentId);
-      const updatedInvoice = {
+      setLoading(true);
+      setError(null);
+
+      const payment = payments.find(p => p.id === paymentId);
+      const parent = parents.find(p => p.id === payment.parentId);
+
+      await updateDoc(doc(db, 'invoices', paymentId), {
         status: 'paid',
         paidAt: new Date().toISOString()
-      };
-      
-      await updateDoc(paymentRef, updatedInvoice);
-      
-      // Get the updated invoice data and parent info for notification
-      const invoiceDoc = await getDoc(paymentRef);
-      if (!invoiceDoc.exists()) {
-        throw new Error('Invoice not found after update');
-      }
-      
-      const invoiceData = { id: invoiceDoc.id, ...invoiceDoc.data(), ...updatedInvoice };
-      
-      console.log('🔍 Invoice marked as paid:', {
-        id: invoiceData.id,
-        invoiceNo: invoiceData.invoiceNo,
-        totalAmount: invoiceData.totalAmount,
-        parentId: invoiceData.parentId
       });
-      
-      // Get parent data
-      const parentDoc = await getDoc(doc(db, 'users', invoiceData.parentId));
-      if (parentDoc.exists()) {
-        const parentData = parentDoc.data();
-        
-        console.log('🔍 Found parent for notification:', {
-          uid: parentData.uid,
-          email: parentData.email,
-          name: parentData.firstName || parentData.name
-        });
-        
-        // Send payment confirmation notification
-        await sendPaymentConfirmationNotification(invoiceData, parentData);
-      } else {
-        console.warn('⚠️ Parent not found for invoice:', invoiceData.parentId);
-        setNotificationStatus('⚠️ Payment marked as paid, but could not notify parent (parent not found)');
-        setTimeout(() => setNotificationStatus(''), 5000);
-      }
-      
-      await fetchPayments();
-      setSelectedPayment(null);
-      
-    } catch (error) {
-      console.error('Error marking payment as paid:', error);
-      setNotificationStatus(`❌ Error processing payment: ${error.message}`);
-      setTimeout(() => setNotificationStatus(''), 5000);
+
+      await sendPaymentConfirmationNotification(payment, parent);
+
+      setPayments(prev => prev.map(p => 
+        p.id === paymentId 
+          ? { ...p, status: 'paid', paidAt: new Date().toISOString() }
+          : p
+      ));
+
+    } catch (err) {
+      console.error('Error marking payment as paid:', err);
+      setError('Failed to update payment status');
+    } finally {
+      setLoading(false);
     }
   };
 
   const handleExport = () => {
-    console.log('Exporting data...');
-    setNotificationStatus('📊 Export feature coming soon');
-    setTimeout(() => setNotificationStatus(''), 3000);
+    const selectedPayments = payments.filter(p => selectedRows.has(p.id));
+    // Implement export logic here
+    console.log('Exporting:', selectedPayments);
   };
 
   const handleRowSelect = (paymentId) => {
     setSelectedRows(prev => {
-      if (prev.includes(paymentId)) {
-        return prev.filter(id => id !== paymentId);
+      const newSet = new Set(prev);
+      if (newSet.has(paymentId)) {
+        newSet.delete(paymentId);
       } else {
-        return [...prev, paymentId];
+        newSet.add(paymentId);
       }
+      return newSet;
     });
   };
 
   const handleSelectAll = (e) => {
     if (e.target.checked) {
-      setSelectedRows(payments.map(payment => payment.id));
+      setSelectedRows(new Set(payments.map(p => p.id)));
     } else {
-      setSelectedRows([]);
+      setSelectedRows(new Set());
     }
   };
 
-  if (loading) {
-    return <div className="loading">Loading...</div>;
-  }
+  const filteredPayments = payments.filter(payment => {
+    const matchesSearch = 
+      (payment.parentName?.toLowerCase() || '').includes(searchTerm.toLowerCase()) ||
+      (payment.id?.toLowerCase() || '').includes(searchTerm.toLowerCase());
+    const matchesStatus = filterStatus === 'all' || payment.status === filterStatus;
+    return matchesSearch && matchesStatus;
+  });
 
-  if (showInvoiceForm || isEditing) {
+  const formatCurrency = (amount) => {
+    if (typeof amount !== 'number' || isNaN(amount)) return '$0.00';
+    return new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: 'USD'
+    }).format(amount);
+  };
+
+  const formatDate = (dateString) => {
+    return new Date(dateString).toLocaleDateString();
+  };
+
+  const getStatusBadgeClass = (status) => {
+    switch (status) {
+      case 'paid':
+        return 'badge-success';
+      case 'overdue':
+        return 'badge-error';
+      default:
+        return 'badge-warning';
+    }
+  };
+
+  if (loading && payments.length === 0) {
     return (
-      <div className="invoice-form">
-        <h3>{isEditing ? 'Edit Invoice' : 'Create New Invoice'}</h3>
-        
-        {/* Notification Status */}
-        {notificationStatus && (
-          <div className={`notification-status ${sendingNotifications ? 'processing' : 'success'}`}>
-            {sendingNotifications && <div className="notification-spinner"></div>}
-            {notificationStatus}
-          </div>
-        )}
-        
-        <div className="parent-selector">
-          <label>Select Parent:</label>
-          <select 
-            value={selectedParent?.id || ''} 
-            onChange={(e) => setSelectedParent(parents.find(p => p.id === e.target.value))}
-            disabled={isEditing}
-          >
-            <option value="">Select a parent...</option>
-            {parents.map(parent => (
-              <option key={parent.id} value={parent.id}>
-                {parent.name || `${parent.firstName} ${parent.lastName}` || parent.email}
-              </option>
-            ))}
-          </select>
-        </div>
-
-        <form onSubmit={isEditing ? handleUpdate : handleInvoiceSubmit}>
-          <div className="invoice-items">
-            {invoiceData.items.map((item, index) => (
-              <div key={index} className="invoice-item">
-                <div className="field-group">
-                  <label>Item Description</label>
-                  <input
-                    type="text"
-                    placeholder="Description"
-                    value={item.description}
-                    onChange={(e) => handleItemChange(index, 'description', e.target.value)}
-                    required
-                  />
-                </div>
-                <div className="field-group">
-                  <label>Quantity</label>
-                  <input
-                    type="number"
-                    placeholder="Quantity"
-                    value={item.quantity}
-                    onChange={(e) => handleItemChange(index, 'quantity', parseInt(e.target.value))}
-                  min="1"
-                  required
-                />
-                </div>
-                <div className="field-group">
-                  <label>Rate</label>
-                  <input
-                    type="number"
-                  placeholder="Rate"
-                  value={item.rate}
-                  onChange={(e) => handleItemChange(index, 'rate', parseFloat(e.target.value))}
-                  min="0"
-                  step="0.01"
-                  required
-                />
-                </div>
-                <span className="item-total">${item.total.toFixed(2)}</span>
-                <button type="button" onClick={() => removeItem(index)}>Remove</button>
-              </div>
-            ))}
-            <button type="button" className="add-item-btn" onClick={addItem}>Add Item</button>
-          </div>
-
-          <div className="invoice-details">
-            <div>
-              <label>Due Date:</label>
-              <input
-                type="date"
-                value={invoiceData.dueDate}
-                onChange={(e) => setInvoiceData({ ...invoiceData, dueDate: e.target.value })}
-                required
-              />
-            </div>
-            <div>
-              <label>Notes:</label>
-              <textarea
-                placeholder="Notes"
-                value={invoiceData.notes}
-                onChange={(e) => setInvoiceData({ ...invoiceData, notes: e.target.value })}
-              />
-            </div>
-          </div>
-
-          {/* Notification Info for New Invoices */}
-          {!isEditing && selectedParent && (
-            <div className="notification-info">
-              <h4>📧 Email Notification</h4>
-              <p>When you create this invoice, an email notification will be automatically sent to:</p>
-              <ul>
-                <li>✅ <strong>{selectedParent.email}</strong> (if they have invoice notifications enabled)</li>
-              </ul>
-              <p>The email will include:</p>
-              <ul>
-                <li>📄 Complete invoice details</li>
-                <li>💳 Payment instructions with e-transfer details</li>
-                <li>🔗 Direct link to view the invoice online</li>
-              </ul>
-            </div>
-          )}
-
-          <div className="form-actions">
-            <button 
-              type="submit"
-              disabled={sendingNotifications}
-            >
-              {sendingNotifications ? (
-                <>
-                  <div className="btn-spinner"></div>
-                  {isEditing ? 'Updating...' : 'Creating & Notifying...'}
-                </>
-              ) : (
-                isEditing ? 'Update Invoice' : 'Send Invoice'
-              )}
-            </button>
-            <button 
-              type="button" 
-              onClick={() => {
-                setShowInvoiceForm(false);
-                setIsEditing(false);
-                setSelectedPayment(null);
-              }}
-              disabled={sendingNotifications}
-            >
-              Cancel
-            </button>
-          </div>
-        </form>
+      <div className="flex justify-center items-center min-h-[400px]">
+        <span className="loading loading-spinner loading-lg text-primary"></span>
       </div>
     );
   }
 
   return (
-    <div className="admin-invoices">
-      <div className="page-header">
-        <h1>Invoices</h1>
-        <button 
-          className="create-invoice-btn"
-          onClick={() => setShowInvoiceForm(true)}
-        >
-          Create Invoice
-        </button>
-      </div>
-
-      {/* Notification Status */}
-      {notificationStatus && (
-        <div className={`notification-status ${sendingNotifications ? 'processing' : 'success'}`}>
-          {sendingNotifications && <div className="notification-spinner"></div>}
-          {notificationStatus}
+    <div className="space-y-6">
+      {error && (
+        <div className="alert alert-error shadow-lg">
+          <svg xmlns="http://www.w3.org/2000/svg" className="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+          <span>{error}</span>
         </div>
       )}
 
-      <div className="payments-overview">
-        <h2>Payments overview</h2>
-        
-        <div className="filters">
-          <div className="filter-group">
-            <label>Date range</label>
-            <input
-              type="date"
-              value={dateRange}
-              onChange={(e) => setDateRange(e.target.value)}
-              className="date-picker"
-            />
-          </div>
+      {/* Create Invoice Form */}
+      <div className="card bg-base-100 shadow-xl">
+        <div className="card-body">
+          <h2 className="card-title">Create New Invoice</h2>
+          <form onSubmit={handleInvoiceSubmit} className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="form-control">
+                <label className="label">
+                  <span className="label-text">Parent</span>
+                </label>
+                <select
+                  className="select select-bordered w-full"
+                  value={invoiceData.parentId}
+                  onChange={(e) => setInvoiceData(prev => ({ ...prev, parentId: e.target.value }))}
+                  required
+                >
+                  <option value="">Select Parent</option>
+                  {parents.map(parent => (
+                    <option key={parent.id} value={parent.id}>
+                      {parent.firstName} {parent.lastName}
+                    </option>
+                  ))}
+                </select>
+              </div>
 
-          <div className="filter-group">
-            <label>Status</label>
-            <select 
-              value={statusFilter}
-              onChange={(e) => setStatusFilter(e.target.value)}
-              className="status-filter"
-            >
-              <option value="All">All</option>
-              <option value="pending">Pending</option>
-              <option value="paid">Paid</option>
-            </select>
-          </div>
+              <div className="form-control">
+                <label className="label">
+                  <span className="label-text">Due Date</span>
+                </label>
+                <input
+                  type="date"
+                  className="input input-bordered w-full"
+                  value={invoiceData.dueDate}
+                  onChange={(e) => setInvoiceData(prev => ({ ...prev, dueDate: e.target.value }))}
+                  required
+                />
+              </div>
+            </div>
 
-          <div className="filter-group">
-            <label>Payment Method</label>
-            <select
-              value={paymentMethodFilter}
-              onChange={(e) => setPaymentMethodFilter(e.target.value)}
-              className="payment-method-filter"
-            >
-              <option value="All">All</option>
-              <option value="e-transfer">E-transfer</option>
-              <option value="Pending">Pending</option>
-            </select>
-          </div>
+            <div className="space-y-4">
+              <div className="flex justify-between items-center">
+                <h3 className="font-semibold">Invoice Items</h3>
+                <button
+                  type="button"
+                  className="btn btn-ghost btn-sm"
+                  onClick={addItem}
+                >
+                  Add Item
+                </button>
+              </div>
 
-          <button 
-            className="export-btn"
-            onClick={handleExport}
-          >
-            Export
-          </button>
-        </div>
-
-        <div className="payments-table">
-          <table>
-            <thead>
-              <tr>
-                <th>
-                  <input
-                    type="checkbox"
-                    onChange={handleSelectAll}
-                    checked={selectedRows.length === payments.length}
-                  />
-                </th>
-                <th>PAYMENT ID</th>
-                <th>STATUS</th>
-                <th>AMOUNT</th>
-                <th>P. METHOD</th>
-                <th>CREATION DATE</th>
-                <th></th>
-              </tr>
-            </thead>
-            <tbody>
-              {payments.map((payment) => (
-                <tr key={payment.id}>
-                  <td>
+              {invoiceData.items.map((item, index) => (
+                <div key={index} className="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
+                  <div className="form-control md:col-span-2">
+                    <label className="label">
+                      <span className="label-text">Description</span>
+                    </label>
                     <input
-                      type="checkbox"
-                      checked={selectedRows.includes(payment.id)}
-                      onChange={() => handleRowSelect(payment.id)}
+                      type="text"
+                      className="input input-bordered w-full"
+                      value={item.description}
+                      onChange={(e) => handleItemChange(index, 'description', e.target.value)}
+                      required
                     />
-                  </td>
-                  <td>{payment.invoiceNo}</td>
-                  <td>
-                    <span className={`status-badge ${payment.status}`}>
-                      {payment.status.toUpperCase()}
-                    </span>
-                  </td>
-                  <td>${payment.totalAmount.toFixed(2)}</td>
-                  <td>{payment.status === 'pending' ? 'Pending' : 'e-transfer'}</td>
-                  <td>{new Date(payment.createdAt).toLocaleString()}</td>
-                  <td>
-                    <button 
-                      className="more-actions"
-                      onClick={() => setSelectedPayment(payment)}
-                    >
-                      ...
-                    </button>
-                  </td>
-                </tr>
+                  </div>
+                  <div className="form-control">
+                    <label className="label">
+                      <span className="label-text">Amount</span>
+                    </label>
+                    <div className="join">
+                      <span className="join-item flex items-center px-3 bg-base-200">$</span>
+                      <input
+                        type="number"
+                        className="input input-bordered join-item w-full"
+                        value={item.amount}
+                        onChange={(e) => handleItemChange(index, 'amount', e.target.value)}
+                        required
+                        min="0"
+                        step="0.01"
+                      />
+                      {index > 0 && (
+                        <button
+                          type="button"
+                          className="btn btn-ghost btn-sm join-item"
+                          onClick={() => removeItem(index)}
+                        >
+                          ✕
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                </div>
               ))}
-            </tbody>
-          </table>
+            </div>
 
-          <div className="pagination">
-            <button disabled>Previous</button>
-            <span>Page 1 of 1</span>
-            <button disabled>Next</button>
-          </div>
+            <div className="form-control">
+              <label className="label">
+                <span className="label-text">Notes</span>
+              </label>
+              <textarea
+                className="textarea textarea-bordered h-24"
+                value={invoiceData.notes}
+                onChange={(e) => setInvoiceData(prev => ({ ...prev, notes: e.target.value }))}
+                placeholder="Add any additional notes..."
+              />
+            </div>
+
+            <div className="card-actions justify-end">
+              <button
+                type="submit"
+                className="btn btn-primary"
+                disabled={loading}
+              >
+                {loading ? (
+                  <span className="loading loading-spinner loading-sm"></span>
+                ) : (
+                  'Create Invoice'
+                )}
+              </button>
+            </div>
+          </form>
         </div>
       </div>
 
-      {selectedPayment && (
-        <div className="payment-detail-modal">
-          <div className="modal-content">
-            <button className="close-btn" onClick={() => setSelectedPayment(null)}>&times;</button>
-            <h3>Invoice #{selectedPayment.invoiceNo}</h3>
-            <div className="payment-info">
-              <p><strong>Parent:</strong> {selectedPayment.parentName}</p>
-              <p><strong>Amount:</strong> ${selectedPayment.totalAmount.toFixed(2)}</p>
-              <p><strong>Status:</strong> {selectedPayment.status}</p>
-              <p><strong>Created:</strong> {new Date(selectedPayment.createdAt).toLocaleString()}</p>
-              <p><strong>Due Date:</strong> {new Date(selectedPayment.dueDate).toLocaleDateString()}</p>
-              {selectedPayment.paidAt && (
-                <p><strong>Paid Date:</strong> {new Date(selectedPayment.paidAt).toLocaleString()}</p>
-              )}
-            </div>
-            
-            {/* Notification Info */}
-            <div className="notification-info-modal">
-              <h4>📧 Notification Status</h4>
-              {selectedPayment.status === 'pending' ? (
-                <p>✅ Parent was notified when this invoice was created</p>
-              ) : (
-                <p>✅ Parent was notified when payment was confirmed</p>
-              )}
-            </div>
-            
-            <div className="modal-actions">
-              {selectedPayment.status === 'pending' && (
-                <>
-                  <button 
-                    className="edit-btn"
-                    onClick={() => handleEdit(selectedPayment)}
-                  >
-                    Edit
-                  </button>
-                  <button 
-                    className="mark-paid-btn"
-                    onClick={() => markAsPaid(selectedPayment.id)}
-                    disabled={sendingNotifications}
-                  >
-                    {sendingNotifications ? 'Processing...' : 'Mark as Paid'}
-                  </button>
-                </>
-              )}
-              <button 
-                className="delete-btn"
-                onClick={() => handleDelete(selectedPayment.id)}
+      {/* Payments List */}
+      <div className="card bg-base-100 shadow-xl">
+        <div className="card-body">
+          <div className="flex flex-col sm:flex-row gap-4 items-center justify-between mb-4">
+            <h2 className="card-title">Payment Records</h2>
+            <div className="flex gap-2">
+              <button
+                className="btn btn-outline btn-sm"
+                onClick={handleExport}
+                disabled={selectedRows.size === 0}
               >
-                Delete
+                Export Selected
+              </button>
+            </div>
+          </div>
+
+          <div className="flex flex-col sm:flex-row gap-4 items-center justify-between mb-4">
+            <div className="form-control w-full sm:w-auto">
+              <div className="input-group">
+                <input
+                  type="text"
+                  placeholder="Search payments..."
+                  className="input input-bordered w-full"
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                />
+                <button className="btn btn-square">
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                  </svg>
+                </button>
+              </div>
+            </div>
+
+            <select
+              className="select select-bordered w-full sm:w-auto"
+              value={filterStatus}
+              onChange={(e) => setFilterStatus(e.target.value)}
+            >
+              <option value="all">All Statuses</option>
+              <option value="pending">Pending</option>
+              <option value="paid">Paid</option>
+              <option value="overdue">Overdue</option>
+            </select>
+          </div>
+
+          <div className="overflow-x-auto">
+            <table className="table table-zebra w-full">
+              <thead>
+                <tr>
+                  <th>
+                    <label>
+                      <input
+                        type="checkbox"
+                        className="checkbox"
+                        checked={selectedRows.size === payments.length}
+                        onChange={handleSelectAll}
+                      />
+                    </label>
+                  </th>
+                  <th>Parent</th>
+                  <th>Amount</th>
+                  <th>Due Date</th>
+                  <th>Status</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {filteredPayments.map((payment) => (
+                  <tr key={payment.id}>
+                    <td>
+                      <input
+                        type="checkbox"
+                        checked={selectedRows.has(payment.id)}
+                        onChange={() => handleRowSelect(payment.id)}
+                        className="checkbox"
+                      />
+                    </td>
+                    <td>{payment.parentName}</td>
+                    <td>{formatCurrency(payment.totalAmount)}</td>
+                    <td>{formatDate(payment.dueDate)}</td>
+                    <td>
+                      <span className={getStatusBadgeClass(payment.status)}>
+                        {payment.status}
+                      </span>
+                    </td>
+                    <td className="flex gap-2">
+                      <button
+                        className="btn btn-sm btn-ghost"
+                        onClick={() => handleEdit(payment)}
+                      >
+                        Edit
+                      </button>
+                      {payment.status === 'pending' && (
+                        <button
+                          className="btn btn-sm btn-success"
+                          onClick={() => markAsPaid(payment.id)}
+                        >
+                          Mark Paid
+                        </button>
+                      )}
+                      <button
+                        className="btn btn-sm btn-error"
+                        onClick={() => handleDelete(payment.id)}
+                      >
+                        Delete
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+
+          {filteredPayments.length === 0 && (
+            <div className="text-center py-8">
+              <h3 className="font-semibold mb-2">No payments found</h3>
+              <p className="text-base-content/70">Try adjusting your search or filter criteria</p>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Edit Modal */}
+      {showEditModal && (
+        <div className="modal modal-open">
+          <div className="modal-box">
+            <h3 className="font-bold text-lg mb-4">Edit Payment</h3>
+            
+            <div className="space-y-4">
+              <div className="form-control">
+                <label className="label">
+                  <span className="label-text">Due Date</span>
+                </label>
+                <input
+                  type="date"
+                  className="input input-bordered w-full"
+                  value={invoiceData.dueDate}
+                  onChange={(e) => setInvoiceData(prev => ({ ...prev, dueDate: e.target.value }))}
+                  required
+                />
+              </div>
+
+              <div className="space-y-4">
+                <div className="flex justify-between items-center">
+                  <h4 className="font-semibold">Invoice Items</h4>
+                  <button
+                    type="button"
+                    className="btn btn-ghost btn-sm"
+                    onClick={addItem}
+                  >
+                    Add Item
+                  </button>
+                </div>
+
+                {invoiceData.items.map((item, index) => (
+                  <div key={index} className="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
+                    <div className="form-control md:col-span-2">
+                      <label className="label">
+                        <span className="label-text">Description</span>
+                      </label>
+                      <input
+                        type="text"
+                        className="input input-bordered w-full"
+                        value={item.description}
+                        onChange={(e) => handleItemChange(index, 'description', e.target.value)}
+                        required
+                      />
+                    </div>
+                    <div className="form-control">
+                      <label className="label">
+                        <span className="label-text">Amount</span>
+                      </label>
+                      <div className="join">
+                        <span className="join-item flex items-center px-3 bg-base-200">$</span>
+                        <input
+                          type="number"
+                          className="input input-bordered join-item w-full"
+                          value={item.amount}
+                          onChange={(e) => handleItemChange(index, 'amount', e.target.value)}
+                          required
+                          min="0"
+                          step="0.01"
+                        />
+                        {index > 0 && (
+                          <button
+                            type="button"
+                            className="btn btn-ghost btn-sm join-item"
+                            onClick={() => removeItem(index)}
+                          >
+                            ✕
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              <div className="form-control">
+                <label className="label">
+                  <span className="label-text">Notes</span>
+                </label>
+                <textarea
+                  className="textarea textarea-bordered h-24"
+                  value={invoiceData.notes}
+                  onChange={(e) => setInvoiceData(prev => ({ ...prev, notes: e.target.value }))}
+                  placeholder="Add any additional notes..."
+                />
+              </div>
+            </div>
+
+            <div className="modal-action">
+              <button
+                className="btn btn-primary"
+                onClick={handleUpdate}
+                disabled={loading}
+              >
+                {loading ? (
+                  <span className="loading loading-spinner loading-sm"></span>
+                ) : (
+                  'Save Changes'
+                )}
+              </button>
+              <button
+                className="btn"
+                onClick={() => {
+                  setShowEditModal(false);
+                  setSelectedPayment(null);
+                }}
+              >
+                Cancel
               </button>
             </div>
           </div>

@@ -83,275 +83,358 @@ export default function ParentSettings() {
   ];
 
   return (
-    <div className="settings-container">
-      <div className="settings-header">
-        <h1>⚙️ Parent Account Settings</h1>
-        <p>Manage your account preferences, notifications, and privacy settings</p>
-      </div>
-      
-      {/* Settings Navigation */}
-      <div className="settings-nav">
-        {tabs.map(tab => (
-          <button
-            key={tab.id}
-            className={`tab-btn ${activeTab === tab.id ? 'active' : ''}`}
-            onClick={() => setActiveTab(tab.id)}
-          >
-            <span className="tab-icon">{tab.icon}</span>
-            <span className="tab-label">{tab.label}</span>
-          </button>
-        ))}
-      </div>
-
-      {/* Tab Content */}
-      <div className="settings-content">
-        {activeTab === 'account' && (
-          <div className="tab-content">
-            {/* Google Account Linking Section */}
-            <section className="settings-section">
-              <GoogleAccountLinking />
-            </section>
-            
-            <section className="settings-section">
-              <h2>🔒 Privacy Settings</h2>
-              <p className="section-description">
-                Control how your child's information is shared and displayed within the daycare system.
-              </p>
-              
-              <div className="setting-item">
-                <label>
-                  <input
-                    type="checkbox"
-                    checked={settings.privacySettings.shareChildPhotos}
-                    onChange={(e) => handlePrivacySettingChange('shareChildPhotos', e.target.checked)}
-                  />
-                  📸 Allow Individual Photos
-                </label>
-                <p className="setting-description">
-                  Allow daycare staff to take and share individual photos of your child with you
-                </p>
-              </div>
-
-              <div className="setting-item">
-                <label>
-                  <input
-                    type="checkbox"
-                    checked={settings.privacySettings.allowChildInGroupPhotos}
-                    onChange={(e) => handlePrivacySettingChange('allowChildInGroupPhotos', e.target.checked)}
-                  />
-                  👥 Include in Group Photos
-                </label>
-                <p className="setting-description">
-                  Allow your child to be included in group activity photos and class pictures
-                </p>
-              </div>
-
-              <div className="setting-item">
-                <label>
-                  <input
-                    type="checkbox"
-                    checked={settings.privacySettings.shareProgressReports}
-                    onChange={(e) => handlePrivacySettingChange('shareProgressReports', e.target.checked)}
-                  />
-                  📊 Share Progress Reports
-                </label>
-                <p className="setting-description">
-                  Allow daycare staff to share detailed progress reports and developmental milestones
-                </p>
-              </div>
-
-              <div className="privacy-note">
-                <h4>🛡️ Your Privacy is Protected</h4>
-                <ul>
-                  <li>Photos are never shared outside the daycare system</li>
-                  <li>Only authorized staff and parents can view child information</li>
-                  <li>All data is securely encrypted and stored</li>
-                  <li>You can change these settings at any time</li>
-                </ul>
-              </div>
-            </section>
-
-            <section className="settings-section">
-              <h2>👶 Child Information Display</h2>
-              <div className="display-preferences">
-                <h3>Dashboard Preferences</h3>
-                <p>Choose what information is prominently displayed on your dashboard:</p>
-                <div className="display-options">
-                  <label><input type="checkbox" defaultChecked /> Today's Activities</label>
-                  <label><input type="checkbox" defaultChecked /> Meal Reports</label>
-                  <label><input type="checkbox" defaultChecked /> Nap Times</label>
-                  <label><input type="checkbox" defaultChecked /> Attendance Status</label>
-                  <label><input type="checkbox" /> Weekly Summary</label>
-                  <label><input type="checkbox" /> Upcoming Events</label>
-                </div>
-              </div>
-            </section>
+    <div className="container mx-auto p-4">
+      <div className="card bg-base-100 shadow-xl">
+        <div className="card-body">
+          <div className="flex flex-col md:flex-row justify-between items-center gap-4">
+            <div>
+              <h1 className="text-2xl font-bold">⚙️ Parent Account Settings</h1>
+              <p className="text-base-content/70">Manage your account preferences, notifications, and privacy settings</p>
+            </div>
           </div>
-        )}
 
-        {activeTab === 'notifications' && (
-          <div className="tab-content">
-            <NotificationSettings userId={user?.uid} userRole="parent" />
-            
-            <section className="settings-section">
-              <h2>📱 Additional Notification Options</h2>
-              
-              <div className="setting-item">
-                <label>
-                  <input
-                    type="checkbox"
-                    checked={settings.dailyUpdates}
-                    onChange={(e) => handleSettingChange('dailyUpdates', e.target.checked)}
-                  />
-                  📅 Daily Summary Emails
-                </label>
-                <p className="setting-description">
-                  Receive a daily summary of your child's activities, meals, and notes at the end of each day
-                </p>
-              </div>
+          {/* Settings Navigation */}
+          <div className="tabs tabs-boxed mt-6">
+            {tabs.map(tab => (
+              <button
+                key={tab.id}
+                className={`tab ${activeTab === tab.id ? 'tab-active' : ''}`}
+                onClick={() => setActiveTab(tab.id)}
+              >
+                <span className="mr-2">{tab.icon}</span>
+                {tab.label}
+              </button>
+            ))}
+          </div>
 
-              <div className="setting-item">
-                <label>
-                  <input
-                    type="checkbox"
-                    checked={settings.weeklyReports}
-                    onChange={(e) => handleSettingChange('weeklyReports', e.target.checked)}
-                  />
-                  📊 Weekly Progress Reports
-                </label>
-                <p className="setting-description">
-                  Receive detailed weekly progress reports with developmental milestones and achievements
-                </p>
-              </div>
+          {/* Tab Content */}
+          <div className="mt-6">
+            {activeTab === 'account' && (
+              <div className="space-y-6">
+                {/* Google Account Linking Section */}
+                <div className="card bg-base-200">
+                  <div className="card-body">
+                    <GoogleAccountLinking />
+                  </div>
+                </div>
+                
+                <div className="card bg-base-200">
+                  <div className="card-body">
+                    <h2 className="card-title">🔒 Privacy Settings</h2>
+                    <p className="text-base-content/70">
+                      Control how your child's information is shared and displayed within the daycare system.
+                    </p>
+                    
+                    <div className="form-control">
+                      <label className="label cursor-pointer">
+                        <span className="label-text">📸 Allow Individual Photos</span>
+                        <input
+                          type="checkbox"
+                          className="toggle toggle-primary"
+                          checked={settings.privacySettings.shareChildPhotos}
+                          onChange={(e) => handlePrivacySettingChange('shareChildPhotos', e.target.checked)}
+                        />
+                      </label>
+                      <p className="text-sm text-base-content/70 ml-2">
+                        Allow daycare staff to take and share individual photos of your child with you
+                      </p>
+                    </div>
 
-              <div className="parent-notification-benefits">
-                <h3>✨ Why Email Notifications Matter</h3>
-                <div className="benefits-grid">
-                  <div className="benefit-card">
-                    <h4>🕐 Stay Informed</h4>
-                    <p>Know immediately when important events are scheduled or changes occur.</p>
+                    <div className="form-control mt-4">
+                      <label className="label cursor-pointer">
+                        <span className="label-text">👥 Include in Group Photos</span>
+                        <input
+                          type="checkbox"
+                          className="toggle toggle-primary"
+                          checked={settings.privacySettings.allowChildInGroupPhotos}
+                          onChange={(e) => handlePrivacySettingChange('allowChildInGroupPhotos', e.target.checked)}
+                        />
+                      </label>
+                      <p className="text-sm text-base-content/70 ml-2">
+                        Allow your child to be included in group activity photos and class pictures
+                      </p>
+                    </div>
+
+                    <div className="form-control mt-4">
+                      <label className="label cursor-pointer">
+                        <span className="label-text">📊 Share Progress Reports</span>
+                        <input
+                          type="checkbox"
+                          className="toggle toggle-primary"
+                          checked={settings.privacySettings.shareProgressReports}
+                          onChange={(e) => handlePrivacySettingChange('shareProgressReports', e.target.checked)}
+                        />
+                      </label>
+                      <p className="text-sm text-base-content/70 ml-2">
+                        Allow daycare staff to share detailed progress reports and developmental milestones
+                      </p>
+                    </div>
+
+                    <div className="alert alert-info mt-6">
+                      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" className="stroke-current shrink-0 w-6 h-6">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      </svg>
+                      <div>
+                        <h4 className="font-bold">🛡️ Your Privacy is Protected</h4>
+                        <ul className="list-disc list-inside text-sm mt-2">
+                          <li>Photos are never shared outside the daycare system</li>
+                          <li>Only authorized staff and parents can view child information</li>
+                          <li>All data is securely encrypted and stored</li>
+                          <li>You can change these settings at any time</li>
+                        </ul>
+                      </div>
+                    </div>
                   </div>
-                  <div className="benefit-card">
-                    <h4>💰 Never Miss Payments</h4>
-                    <p>Get notified about new invoices and payment confirmations to stay on top of billing.</p>
-                  </div>
-                  <div className="benefit-card">
-                    <h4>🎉 Celebrate Achievements</h4>
-                    <p>Be the first to know about your child's milestones and special moments.</p>
-                  </div>
-                  <div className="benefit-card">
-                    <h4>📱 Mobile Friendly</h4>
-                    <p>All emails are designed to look great on your phone, tablet, or computer.</p>
+                </div>
+
+                <div className="card bg-base-200">
+                  <div className="card-body">
+                    <h2 className="card-title">👶 Child Information Display</h2>
+                    <div className="mt-4">
+                      <h3 className="font-bold mb-2">Dashboard Preferences</h3>
+                      <p className="text-base-content/70 mb-4">Choose what information is prominently displayed on your dashboard:</p>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <label className="label cursor-pointer justify-start gap-4">
+                          <input type="checkbox" className="checkbox" defaultChecked />
+                          <span className="label-text">Today's Activities</span>
+                        </label>
+                        <label className="label cursor-pointer justify-start gap-4">
+                          <input type="checkbox" className="checkbox" defaultChecked />
+                          <span className="label-text">Meal Reports</span>
+                        </label>
+                        <label className="label cursor-pointer justify-start gap-4">
+                          <input type="checkbox" className="checkbox" defaultChecked />
+                          <span className="label-text">Nap Times</span>
+                        </label>
+                        <label className="label cursor-pointer justify-start gap-4">
+                          <input type="checkbox" className="checkbox" defaultChecked />
+                          <span className="label-text">Attendance Status</span>
+                        </label>
+                        <label className="label cursor-pointer justify-start gap-4">
+                          <input type="checkbox" className="checkbox" />
+                          <span className="label-text">Weekly Summary</span>
+                        </label>
+                        <label className="label cursor-pointer justify-start gap-4">
+                          <input type="checkbox" className="checkbox" />
+                          <span className="label-text">Upcoming Events</span>
+                        </label>
+                      </div>
+                    </div>
                   </div>
                 </div>
               </div>
-            </section>
-          </div>
-        )}
+            )}
 
-        {activeTab === 'communication' && (
-          <div className="tab-content">
-            <section className="settings-section">
-              <h2>💬 Communication Preferences</h2>
-              
-              <div className="setting-item">
-                <label>Preferred Communication Method</label>
-                <select
-                  value={settings.communicationPreference}
-                  onChange={(e) => handleSettingChange('communicationPreference', e.target.value)}
-                >
-                  <option value="email">📧 Email Only</option>
-                  <option value="sms">📱 SMS Only</option>
-                  <option value="both">📧📱 Both Email & SMS</option>
-                  <option value="urgent-sms">📧 Email + SMS for Urgent</option>
-                </select>
-                <p className="setting-description">
-                  Choose how you would like to receive communications from the daycare
-                </p>
-              </div>
-
-              <div className="setting-item">
-                <label>Language</label>
-                <select
-                  value={settings.language}
-                  onChange={(e) => handleSettingChange('language', e.target.value)}
-                >
-                  <option value="en">🇺🇸 English</option>
-                  <option value="es">🇪🇸 Español</option>
-                  <option value="fr">🇫🇷 Français</option>
-                </select>
-                <p className="setting-description">
-                  Select your preferred language for all communications
-                </p>
-              </div>
-
-              <div className="setting-item">
-                <label>
-                  <input
-                    type="checkbox"
-                    checked={settings.smsNotifications}
-                    onChange={(e) => handleSettingChange('smsNotifications', e.target.checked)}
-                  />
-                  📱 Enable SMS Notifications
-                </label>
-                <p className="setting-description">
-                  Receive urgent notifications and reminders via SMS text messages
-                </p>
-              </div>
-
-              <div className="communication-tips">
-                <h3>💡 Communication Tips</h3>
-                <div className="tips-list">
-                  <div className="tip-item">
-                    <strong>📧 Email:</strong> Best for detailed information, invoices, and non-urgent updates
+            {activeTab === 'notifications' && (
+              <div className="space-y-6">
+                <div className="card bg-base-200">
+                  <div className="card-body">
+                    <NotificationSettings />
                   </div>
-                  <div className="tip-item">
-                    <strong>📱 SMS:</strong> Perfect for urgent alerts, pickup reminders, and quick confirmations
-                  </div>
-                  <div className="tip-item">
-                    <strong>💬 In-App Messages:</strong> Great for ongoing conversations with daycare staff
-                  </div>
-                  <div className="tip-item">
-                    <strong>📞 Phone Calls:</strong> Reserved for emergencies and urgent matters only
+                </div>
+                
+                <div className="card bg-base-200">
+                  <div className="card-body">
+                    <h2 className="card-title">📱 Additional Notification Options</h2>
+                    
+                    <div className="form-control mt-4">
+                      <label className="label cursor-pointer">
+                        <span className="label-text">📅 Daily Summary Emails</span>
+                        <input
+                          type="checkbox"
+                          className="toggle toggle-primary"
+                          checked={settings.dailyUpdates}
+                          onChange={(e) => handleSettingChange('dailyUpdates', e.target.checked)}
+                        />
+                      </label>
+                      <p className="text-sm text-base-content/70 ml-2">
+                        Receive a daily summary of your child's activities, meals, and notes at the end of each day
+                      </p>
+                    </div>
+
+                    <div className="form-control mt-4">
+                      <label className="label cursor-pointer">
+                        <span className="label-text">📊 Weekly Progress Reports</span>
+                        <input
+                          type="checkbox"
+                          className="toggle toggle-primary"
+                          checked={settings.weeklyReports}
+                          onChange={(e) => handleSettingChange('weeklyReports', e.target.checked)}
+                        />
+                      </label>
+                      <p className="text-sm text-base-content/70 ml-2">
+                        Receive detailed weekly progress reports with developmental milestones and achievements
+                      </p>
+                    </div>
+
+                    <div className="divider"></div>
+
+                    <h3 className="font-bold mb-4">✨ Why Email Notifications Matter</h3>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="card bg-base-100">
+                        <div className="card-body">
+                          <h4 className="card-title text-lg">🕐 Stay Informed</h4>
+                          <p>Know immediately when important events are scheduled or changes occur.</p>
+                        </div>
+                      </div>
+                      <div className="card bg-base-100">
+                        <div className="card-body">
+                          <h4 className="card-title text-lg">💰 Never Miss Payments</h4>
+                          <p>Get notified about new invoices and payment confirmations to stay on top of billing.</p>
+                        </div>
+                      </div>
+                      <div className="card bg-base-100">
+                        <div className="card-body">
+                          <h4 className="card-title text-lg">🎉 Celebrate Achievements</h4>
+                          <p>Be the first to know about your child's milestones and special moments.</p>
+                        </div>
+                      </div>
+                      <div className="card bg-base-100">
+                        <div className="card-body">
+                          <h4 className="card-title text-lg">📱 Mobile Friendly</h4>
+                          <p>All emails are designed to look great on your phone, tablet, or computer.</p>
+                        </div>
+                      </div>
+                    </div>
                   </div>
                 </div>
               </div>
-            </section>
+            )}
 
-            <section className="settings-section">
-              <h2>🎯 Notification Timing</h2>
-              <div className="timing-preferences">
-                <h3>When would you like to receive notifications?</h3>
-                <div className="timing-options">
-                  <div className="timing-item">
-                    <label>Daily Summaries</label>
-                    <select defaultValue="evening">
-                      <option value="morning">Morning (8:00 AM)</option>
-                      <option value="afternoon">Afternoon (3:00 PM)</option>
-                      <option value="evening">Evening (6:00 PM)</option>
-                    </select>
+            {activeTab === 'communication' && (
+              <div className="space-y-6">
+                <div className="card bg-base-200">
+                  <div className="card-body">
+                    <h2 className="card-title">💬 Communication Preferences</h2>
+                    
+                    <div className="form-control mt-4">
+                      <label className="label">
+                        <span className="label-text">Preferred Communication Method</span>
+                      </label>
+                      <select
+                        className="select select-bordered w-full max-w-xs"
+                        value={settings.communicationPreference}
+                        onChange={(e) => handleSettingChange('communicationPreference', e.target.value)}
+                      >
+                        <option value="email">📧 Email Only</option>
+                        <option value="sms">📱 SMS Only</option>
+                        <option value="both">📧📱 Both Email & SMS</option>
+                        <option value="urgent-sms">📧 Email + SMS for Urgent</option>
+                      </select>
+                      <p className="text-sm text-base-content/70 mt-2">
+                        Choose how you would like to receive communications from the daycare
+                      </p>
+                    </div>
+
+                    <div className="form-control mt-4">
+                      <label className="label">
+                        <span className="label-text">Language</span>
+                      </label>
+                      <select
+                        className="select select-bordered w-full max-w-xs"
+                        value={settings.language}
+                        onChange={(e) => handleSettingChange('language', e.target.value)}
+                      >
+                        <option value="en">🇺🇸 English</option>
+                        <option value="es">🇪🇸 Español</option>
+                        <option value="fr">🇫🇷 Français</option>
+                      </select>
+                      <p className="text-sm text-base-content/70 mt-2">
+                        Select your preferred language for all communications
+                      </p>
+                    </div>
+
+                    <div className="form-control mt-4">
+                      <label className="label cursor-pointer">
+                        <span className="label-text">📱 Enable SMS Notifications</span>
+                        <input
+                          type="checkbox"
+                          className="toggle toggle-primary"
+                          checked={settings.smsNotifications}
+                          onChange={(e) => handleSettingChange('smsNotifications', e.target.checked)}
+                        />
+                      </label>
+                      <p className="text-sm text-base-content/70 ml-2">
+                        Receive urgent notifications and reminders via SMS text messages
+                      </p>
+                    </div>
+
+                    <div className="divider"></div>
+
+                    <h3 className="font-bold mb-4">💡 Communication Tips</h3>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="card bg-base-100">
+                        <div className="card-body">
+                          <p><strong>📧 Email:</strong> Best for detailed information, invoices, and non-urgent updates</p>
+                        </div>
+                      </div>
+                      <div className="card bg-base-100">
+                        <div className="card-body">
+                          <p><strong>📱 SMS:</strong> Perfect for urgent alerts, pickup reminders, and quick confirmations</p>
+                        </div>
+                      </div>
+                      <div className="card bg-base-100">
+                        <div className="card-body">
+                          <p><strong>💬 In-App Messages:</strong> Great for ongoing conversations with daycare staff</p>
+                        </div>
+                      </div>
+                      <div className="card bg-base-100">
+                        <div className="card-body">
+                          <p><strong>📞 Phone Calls:</strong> Reserved for emergencies and urgent matters only</p>
+                        </div>
+                      </div>
+                    </div>
                   </div>
-                  <div className="timing-item">
-                    <label>Weekly Reports</label>
-                    <select defaultValue="sunday">
-                      <option value="friday">Friday Evening</option>
-                      <option value="saturday">Saturday Morning</option>
-                      <option value="sunday">Sunday Evening</option>
-                    </select>
+                </div>
+
+                <div className="card bg-base-200">
+                  <div className="card-body">
+                    <h2 className="card-title">🎯 Notification Timing</h2>
+                    <div className="mt-4">
+                      <h3 className="font-bold mb-4">When would you like to receive notifications?</h3>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="form-control">
+                          <label className="label">
+                            <span className="label-text">Daily Summaries</span>
+                          </label>
+                          <select className="select select-bordered w-full" defaultValue="evening">
+                            <option value="morning">Morning (8:00 AM)</option>
+                            <option value="afternoon">Afternoon (3:00 PM)</option>
+                            <option value="evening">Evening (6:00 PM)</option>
+                          </select>
+                        </div>
+                        <div className="form-control">
+                          <label className="label">
+                            <span className="label-text">Weekly Reports</span>
+                          </label>
+                          <select className="select select-bordered w-full" defaultValue="sunday">
+                            <option value="friday">Friday Evening</option>
+                            <option value="saturday">Saturday Morning</option>
+                            <option value="sunday">Sunday Evening</option>
+                          </select>
+                        </div>
+                      </div>
+                    </div>
                   </div>
                 </div>
               </div>
-            </section>
-          </div>
-        )}
+            )}
 
-        {activeTab === 'history' && (
-          <div className="tab-content">
-            <Suspense fallback={<div className="loading">Loading notification history...</div>}>
-              <NotificationHistory userId={user?.uid} userRole="parent" />
-            </Suspense>
+            {activeTab === 'history' && (
+              <div className="card bg-base-200">
+                <div className="card-body">
+                  <Suspense fallback={
+                    <div className="flex justify-center items-center p-8">
+                      <span className="loading loading-spinner loading-lg"></span>
+                    </div>
+                  }>
+                    <NotificationHistory userId={user?.uid} userRole="parent" />
+                  </Suspense>
+                </div>
+              </div>
+            )}
           </div>
-        )}
+        </div>
       </div>
     </div>
   );

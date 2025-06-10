@@ -4,298 +4,408 @@
 import { useState, useEffect } from 'react';
 import { doc, getDoc, setDoc } from 'firebase/firestore';
 import { db } from '../firebase/config';
+import { useAuth } from '../firebase/auth-context';
 
-export default function NotificationSettings({ userId, userRole }) {
+const NotificationSettings = () => {
+  const { user } = useAuth();
   const [settings, setSettings] = useState({
-    emailNotifications: true,
-    notifyOnEvents: true,
-    notifyOnInvoices: true,
-    notifyOnPayments: true
+    email: {
+      enabled: true,
+      events: true,
+      announcements: true,
+      payments: true,
+      dailyReports: true
+    },
+    push: {
+      enabled: true,
+      events: true,
+      announcements: true,
+      payments: true,
+      dailyReports: false
+    },
+    sms: {
+      enabled: false,
+      events: false,
+      announcements: false,
+      payments: true,
+      dailyReports: false
+    }
   });
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState(null);
-  const [success, setSuccess] = useState('');
+  const [success, setSuccess] = useState(false);
 
-  // Load notification settings
   useEffect(() => {
-    const loadSettings = async () => {
-      try {
-        const settingsDoc = await getDoc(doc(db, 'notificationSettings', userId));
-        if (settingsDoc.exists()) {
-          setSettings({ ...settings, ...settingsDoc.data() });
-        }
-        setLoading(false);
-      } catch (error) {
-        console.error('Error loading notification settings:', error);
-        setError('Failed to load notification settings');
-        setLoading(false);
+    loadSettings();
+  }, [user?.uid]);
+
+  const loadSettings = async () => {
+    if (!user) return;
+
+    try {
+      setLoading(true);
+      setError(null);
+
+      const settingsRef = doc(db, 'userSettings', user.uid);
+      const settingsSnap = await getDoc(settingsRef);
+
+      if (settingsSnap.exists()) {
+        const data = settingsSnap.data();
+        setSettings(data.notifications || settings);
+      } else {
+        // Create default settings document
+        await setDoc(settingsRef, {
+          notifications: settings,
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString()
+        }, { merge: true });
       }
-    };
-
-    if (userId) {
-      loadSettings();
+    } catch (err) {
+      console.error('Error loading notification settings:', err);
+      setError(`Failed to load notification settings: ${err.message}`);
+    } finally {
+      setLoading(false);
     }
-  }, [userId]);
+  };
 
-  // Handle toggle changes
-  const handleToggle = (setting) => {
+  const handleToggle = (channel, setting) => {
     setSettings(prev => ({
       ...prev,
-      [setting]: !prev[setting]
+      [channel]: {
+        ...prev[channel],
+        [setting]: !prev[channel][setting]
+      }
     }));
   };
 
-  // Save settings
-  const saveSettings = async () => {
-    setSaving(true);
-    setError(null);
-    
+  const handleSave = async () => {
+    if (!user) return;
+
     try {
-      await setDoc(doc(db, 'notificationSettings', userId), {
-        ...settings,
-        updatedAt: new Date().toISOString(),
-        userId: userId,
-        userRole: userRole
-      });
-      
-      setSuccess('✅ Notification settings saved successfully!');
-      setTimeout(() => setSuccess(''), 3000);
-      
-    } catch (error) {
-      console.error('Error saving notification settings:', error);
-      setError('Failed to save notification settings');
+      setSaving(true);
+      setError(null);
+      setSuccess(false);
+
+      const settingsRef = doc(db, 'userSettings', user.uid);
+      await setDoc(settingsRef, {
+        notifications: settings,
+        updatedAt: new Date().toISOString()
+      }, { merge: true });
+
+      setSuccess(true);
+      setTimeout(() => setSuccess(false), 3000);
+    } catch (err) {
+      console.error('Error saving notification settings:', err);
+      setError(`Failed to save notification settings: ${err.message}`);
     } finally {
       setSaving(false);
     }
   };
 
   if (loading) {
-    return <div className="loading">Loading notification settings...</div>;
+    return (
+      <div className="min-h-screen bg-base-200 flex justify-center items-center">
+        <span className="loading loading-spinner loading-lg text-primary"></span>
+      </div>
+    );
   }
 
   return (
-    <div className="notification-settings">
-      <h2>📧 Email Notification Settings</h2>
-      <p className="settings-description">
-        Choose what notifications you'd like to receive via email. 
-        You can change these settings at any time.
-      </p>
-      
-      {error && <div className="error-message">{error}</div>}
-      {success && <div className="success-message">{success}</div>}
-      
-      <div className="settings-form">
-        {/* Master Email Toggle */}
-        <div className="setting-item master-setting">
-          <label className="toggle-label">
-            <input
-              type="checkbox"
-              checked={settings.emailNotifications}
-              onChange={() => handleToggle('emailNotifications')}
-            />
-            <span className="toggle-switch"></span>
-            <span className="toggle-text">
-              <strong>📧 Enable Email Notifications</strong>
-            </span>
-          </label>
-          <p className="setting-description">
-            Master setting to receive important updates via email. 
-            {settings.emailNotifications ? 
-              'You will receive notifications based on your preferences below.' : 
-              'All email notifications are disabled.'
-            }
-          </p>
-        </div>
+    <div className="min-h-screen bg-base-200 p-6">
+      <div className="max-w-4xl mx-auto space-y-6">
+        <h1 className="text-4xl font-bold text-base-content">
+          <span className="text-primary">Notification</span> Settings
+        </h1>
 
-        {/* Calendar Events */}
-        <div className="setting-item">
-          <label className="toggle-label">
-            <input
-              type="checkbox"
-              checked={settings.notifyOnEvents}
-              onChange={() => handleToggle('notifyOnEvents')}
-              disabled={!settings.emailNotifications}
-            />
-            <span className="toggle-switch"></span>
-            <span className="toggle-text">
-              📅 Calendar Events & Activities
-            </span>
-          </label>
-          <p className="setting-description">
-            {userRole === 'admin' ? 
-              'Get notified when new events are created in the calendar system. Includes suggestions for additional notifications that may be needed.' :
-              'Receive notifications about new events, activities, and schedule changes that affect your child.'
-            }
-          </p>
-          <div className="notification-examples">
-            <strong>You'll be notified about:</strong>
-            <ul>
-              <li>• New calendar events</li>
-              <li>• Special activities and field trips</li>
-              <li>• Schedule changes or updates</li>
-              {userRole === 'admin' && <li>• Notification suggestions for related events</li>}
-            </ul>
+        {error && (
+          <div className="alert alert-error">
+            <svg xmlns="http://www.w3.org/2000/svg" className="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            <span>{error}</span>
           </div>
-        </div>
+        )}
 
-        {/* Parent-specific settings */}
-        {userRole === 'parent' && (
-          <>
-            {/* Invoice Notifications */}
-            <div className="setting-item">
-              <label className="toggle-label">
+        {success && (
+          <div className="alert alert-success">
+            <svg xmlns="http://www.w3.org/2000/svg" className="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            <span>Settings saved successfully!</span>
+          </div>
+        )}
+
+        <div className="card bg-base-100 shadow-xl">
+          <div className="card-body">
+            <h2 className="card-title text-2xl mb-6">Email Notifications</h2>
+            
+            <div className="form-control">
+              <label className="label cursor-pointer">
+                <span className="label-text">Enable Email Notifications</span>
                 <input
                   type="checkbox"
-                  checked={settings.notifyOnInvoices}
-                  onChange={() => handleToggle('notifyOnInvoices')}
-                  disabled={!settings.emailNotifications}
+                  className="toggle toggle-primary"
+                  checked={settings.email.enabled}
+                  onChange={() => handleToggle('email', 'enabled')}
                 />
-                <span className="toggle-switch"></span>
-                <span className="toggle-text">
-                  💰 New Invoices & Billing
-                </span>
               </label>
-              <p className="setting-description">
-                Receive notifications when new invoices are generated for your account.
-                Essential for staying on top of your daycare billing.
-              </p>
-              <div className="notification-examples">
-                <strong>You'll be notified about:</strong>
-                <ul>
-                  <li>• New invoices with complete details</li>
-                  <li>• Payment instructions and e-transfer information</li>
-                  <li>• Due dates and payment reminders</li>
-                  <li>• Direct links to view invoices online</li>
-                </ul>
-              </div>
             </div>
 
-            {/* Payment Confirmations */}
-            <div className="setting-item">
-              <label className="toggle-label">
+            <div className="divider"></div>
+
+            <div className="space-y-4">
+              <div className="form-control">
+                <label className="label cursor-pointer">
+                  <span className="label-text">Calendar Events</span>
+                  <input
+                    type="checkbox"
+                    className="toggle toggle-primary"
+                    checked={settings.email.events}
+                    onChange={() => handleToggle('email', 'events')}
+                    disabled={!settings.email.enabled}
+                  />
+                </label>
+                <p className="text-sm text-base-content/70 pl-2">
+                  Get notified about new events, changes, and reminders
+                </p>
+              </div>
+
+              <div className="form-control">
+                <label className="label cursor-pointer">
+                  <span className="label-text">Announcements</span>
+                  <input
+                    type="checkbox"
+                    className="toggle toggle-primary"
+                    checked={settings.email.announcements}
+                    onChange={() => handleToggle('email', 'announcements')}
+                    disabled={!settings.email.enabled}
+                  />
+                </label>
+                <p className="text-sm text-base-content/70 pl-2">
+                  Important announcements and updates from the daycare
+                </p>
+              </div>
+
+              <div className="form-control">
+                <label className="label cursor-pointer">
+                  <span className="label-text">Payment Notifications</span>
+                  <input
+                    type="checkbox"
+                    className="toggle toggle-primary"
+                    checked={settings.email.payments}
+                    onChange={() => handleToggle('email', 'payments')}
+                    disabled={!settings.email.enabled}
+                  />
+                </label>
+                <p className="text-sm text-base-content/70 pl-2">
+                  Invoices, payment confirmations, and payment reminders
+                </p>
+              </div>
+
+              <div className="form-control">
+                <label className="label cursor-pointer">
+                  <span className="label-text">Daily Reports</span>
+                  <input
+                    type="checkbox"
+                    className="toggle toggle-primary"
+                    checked={settings.email.dailyReports}
+                    onChange={() => handleToggle('email', 'dailyReports')}
+                    disabled={!settings.email.enabled}
+                  />
+                </label>
+                <p className="text-sm text-base-content/70 pl-2">
+                  Daily activity reports and updates about your child
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div className="card bg-base-100 shadow-xl">
+          <div className="card-body">
+            <h2 className="card-title text-2xl mb-6">Push Notifications</h2>
+            
+            <div className="form-control">
+              <label className="label cursor-pointer">
+                <span className="label-text">Enable Push Notifications</span>
                 <input
                   type="checkbox"
-                  checked={settings.notifyOnPayments}
-                  onChange={() => handleToggle('notifyOnPayments')}
-                  disabled={!settings.emailNotifications}
+                  className="toggle toggle-primary"
+                  checked={settings.push.enabled}
+                  onChange={() => handleToggle('push', 'enabled')}
                 />
-                <span className="toggle-switch"></span>
-                <span className="toggle-text">
-                  ✅ Payment Confirmations
-                </span>
               </label>
-              <p className="setting-description">
-                Get notified when your payments are received and processed by the daycare.
-                Provides peace of mind and record keeping.
-              </p>
-              <div className="notification-examples">
-                <strong>You'll be notified when:</strong>
-                <ul>
-                  <li>• Your payment is marked as received</li>
-                  <li>• Invoice status changes to "Paid"</li>
-                  <li>• Payment processing is complete</li>
-                  <li>• Receipt is available for download</li>
-                </ul>
+            </div>
+
+            <div className="divider"></div>
+
+            <div className="space-y-4">
+              <div className="form-control">
+                <label className="label cursor-pointer">
+                  <span className="label-text">Calendar Events</span>
+                  <input
+                    type="checkbox"
+                    className="toggle toggle-primary"
+                    checked={settings.push.events}
+                    onChange={() => handleToggle('push', 'events')}
+                    disabled={!settings.push.enabled}
+                  />
+                </label>
+                <p className="text-sm text-base-content/70 pl-2">
+                  Get instant notifications about events and schedule changes
+                </p>
+              </div>
+
+              <div className="form-control">
+                <label className="label cursor-pointer">
+                  <span className="label-text">Announcements</span>
+                  <input
+                    type="checkbox"
+                    className="toggle toggle-primary"
+                    checked={settings.push.announcements}
+                    onChange={() => handleToggle('push', 'announcements')}
+                    disabled={!settings.push.enabled}
+                  />
+                </label>
+                <p className="text-sm text-base-content/70 pl-2">
+                  Stay updated with important announcements in real-time
+                </p>
+              </div>
+
+              <div className="form-control">
+                <label className="label cursor-pointer">
+                  <span className="label-text">Payment Notifications</span>
+                  <input
+                    type="checkbox"
+                    className="toggle toggle-primary"
+                    checked={settings.push.payments}
+                    onChange={() => handleToggle('push', 'payments')}
+                    disabled={!settings.push.enabled}
+                  />
+                </label>
+                <p className="text-sm text-base-content/70 pl-2">
+                  Instant alerts for payment-related activities
+                </p>
+              </div>
+
+              <div className="form-control">
+                <label className="label cursor-pointer">
+                  <span className="label-text">Daily Reports</span>
+                  <input
+                    type="checkbox"
+                    className="toggle toggle-primary"
+                    checked={settings.push.dailyReports}
+                    onChange={() => handleToggle('push', 'dailyReports')}
+                    disabled={!settings.push.enabled}
+                  />
+                </label>
+                <p className="text-sm text-base-content/70 pl-2">
+                  Get push notifications for daily activity updates
+                </p>
               </div>
             </div>
-          </>
-        )}
-
-        {/* Admin-specific settings */}
-        {userRole === 'admin' && (
-          <div className="admin-notification-extras">
-            <h3>🔧 Additional Admin Notifications</h3>
-            <p>As an administrator, you may also want to consider setting up notifications for:</p>
-            <ul className="suggestion-list">
-              <li>📋 New parent registrations and requests</li>
-              <li>👶 Child attendance tracking alerts</li>
-              <li>💬 New messages from parents</li>
-              <li>📊 Weekly/monthly reports and summaries</li>
-              <li>🚨 System alerts and maintenance notifications</li>
-            </ul>
-            <p><small>These additional notification types can be configured in the main Admin Settings panel.</small></p>
           </div>
-        )}
+        </div>
 
-        {/* Email Preview */}
-        {settings.emailNotifications && (
-          <div className="email-preview-section">
-            <h3>📧 What Your Emails Will Look Like</h3>
-            <p>Our notification emails are designed to be clear, informative, and professional:</p>
-            <div className="email-features">
-              <div className="feature-item">
-                <span className="feature-icon">📱</span>
-                <span>Mobile-friendly design</span>
+        <div className="card bg-base-100 shadow-xl">
+          <div className="card-body">
+            <h2 className="card-title text-2xl mb-6">SMS Notifications</h2>
+            
+            <div className="form-control">
+              <label className="label cursor-pointer">
+                <span className="label-text">Enable SMS Notifications</span>
+                <input
+                  type="checkbox"
+                  className="toggle toggle-primary"
+                  checked={settings.sms.enabled}
+                  onChange={() => handleToggle('sms', 'enabled')}
+                />
+              </label>
+            </div>
+
+            <div className="divider"></div>
+
+            <div className="space-y-4">
+              <div className="form-control">
+                <label className="label cursor-pointer">
+                  <span className="label-text">Calendar Events</span>
+                  <input
+                    type="checkbox"
+                    className="toggle toggle-primary"
+                    checked={settings.sms.events}
+                    onChange={() => handleToggle('sms', 'events')}
+                    disabled={!settings.sms.enabled}
+                  />
+                </label>
+                <p className="text-sm text-base-content/70 pl-2">
+                  Receive SMS alerts for important events
+                </p>
               </div>
-              <div className="feature-item">
-                <span className="feature-icon">🔗</span>
-                <span>Direct links to relevant pages</span>
+
+              <div className="form-control">
+                <label className="label cursor-pointer">
+                  <span className="label-text">Announcements</span>
+                  <input
+                    type="checkbox"
+                    className="toggle toggle-primary"
+                    checked={settings.sms.announcements}
+                    onChange={() => handleToggle('sms', 'announcements')}
+                    disabled={!settings.sms.enabled}
+                  />
+                </label>
+                <p className="text-sm text-base-content/70 pl-2">
+                  Get urgent announcements via SMS
+                </p>
               </div>
-              <div className="feature-item">
-                <span className="feature-icon">📝</span>
-                <span>Complete information included</span>
+
+              <div className="form-control">
+                <label className="label cursor-pointer">
+                  <span className="label-text">Payment Notifications</span>
+                  <input
+                    type="checkbox"
+                    className="toggle toggle-primary"
+                    checked={settings.sms.payments}
+                    onChange={() => handleToggle('sms', 'payments')}
+                    disabled={!settings.sms.enabled}
+                  />
+                </label>
+                <p className="text-sm text-base-content/70 pl-2">
+                  SMS alerts for payment deadlines and confirmations
+                </p>
               </div>
-              <div className="feature-item">
-                <span className="feature-icon">🎨</span>
-                <span>Professional, easy-to-read format</span>
+
+              <div className="form-control">
+                <label className="label cursor-pointer">
+                  <span className="label-text">Daily Reports</span>
+                  <input
+                    type="checkbox"
+                    className="toggle toggle-primary"
+                    checked={settings.sms.dailyReports}
+                    onChange={() => handleToggle('sms', 'dailyReports')}
+                    disabled={!settings.sms.enabled}
+                  />
+                </label>
+                <p className="text-sm text-base-content/70 pl-2">
+                  Get daily updates via SMS
+                </p>
               </div>
             </div>
           </div>
-        )}
+        </div>
 
-        {/* Save Button */}
-        <div className="settings-actions">
-          <button 
-            className="save-btn"
-            onClick={saveSettings}
+        <div className="flex justify-end gap-2">
+          <button
+            className={`btn btn-primary ${saving ? 'loading' : ''}`}
+            onClick={handleSave}
             disabled={saving}
           >
-            {saving ? (
-              <>
-                <div className="btn-spinner"></div>
-                Saving Settings...
-              </>
-            ) : (
-              '💾 Save Notification Settings'
-            )}
+            Save Settings
           </button>
-        </div>
-
-        {/* Privacy Notice */}
-        <div className="privacy-notice">
-          <h4>🔒 Privacy & Email Security</h4>
-          <ul>
-            <li>We never share your email address with third parties</li>
-            <li>All emails are sent securely and contain only relevant information</li>
-            <li>You can unsubscribe or modify these settings at any time</li>
-            <li>Urgent safety notifications may still be sent even if notifications are disabled</li>
-          </ul>
-        </div>
-
-        {/* Email Frequency Info */}
-        <div className="frequency-info">
-          <h4>📬 Email Frequency</h4>
-          <div className="frequency-grid">
-            <div className="frequency-item">
-              <strong>Calendar Events:</strong>
-              <span>As they're created (typically 1-3 per week)</span>
-            </div>
-            {userRole === 'parent' && (
-              <>
-                <div className="frequency-item">
-                  <strong>Invoices:</strong>
-                  <span>Monthly or as billed</span>
-                </div>
-                <div className="frequency-item">
-                  <strong>Payment Confirmations:</strong>
-                  <span>Within 24 hours of payment processing</span>
-                </div>
-              </>
-            )}
-          </div>
         </div>
       </div>
     </div>
   );
-}
+};
+
+export default NotificationSettings;

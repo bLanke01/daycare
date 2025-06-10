@@ -150,170 +150,154 @@ export default function NotificationHistory({ userId, userRole }) {
 
   if (loading) {
     return (
-      <div className="notification-history">
-        <div className="loading">Loading notification history...</div>
+      <div className="min-h-screen bg-base-200 flex justify-center items-center">
+        <span className="loading loading-spinner loading-lg text-primary"></span>
       </div>
     );
   }
 
   return (
-    <div className="notification-history">
-      <div className="history-header">
-        <h2>📜 Notification History</h2>
-        <p className="history-description">
-          {userRole === 'admin' 
-            ? 'View all notifications sent by the system and track their delivery status.'
-            : 'View all email notifications you\'ve received from the daycare.'
-          }
-        </p>
-      </div>
+    <div className="min-h-screen bg-base-200 p-6">
+      <div className="max-w-7xl mx-auto space-y-6">
+        <h1 className="text-4xl font-bold text-base-content">
+          <span className="text-primary">Notification</span> History
+        </h1>
 
-      {/* Filters */}
-      <div className="history-filters">
-        <div className="filter-group">
-          <label>Notification Type:</label>
-          <select value={filter} onChange={(e) => setFilter(e.target.value)}>
-            <option value="all">All Notifications</option>
-            <option value="event">📅 Calendar Events</option>
-            {userRole === 'parent' && (
-              <>
-                <option value="invoice">💰 Invoices</option>
-                <option value="payment">✅ Payments</option>
-              </>
-            )}
-            {userRole === 'admin' && (
-              <>
-                <option value="admin">🔧 Admin Notifications</option>
-                <option value="system">🚨 System Alerts</option>
-              </>
-            )}
-          </select>
-        </div>
-
-        <div className="filter-group">
-          <label>Time Range:</label>
-          <select value={timeRange} onChange={(e) => setTimeRange(e.target.value)}>
-            <option value="7">Last 7 days</option>
-            <option value="30">Last 30 days</option>
-            <option value="90">Last 3 months</option>
-            <option value="365">Last year</option>
-          </select>
-        </div>
-
-        <button 
-          className="refresh-btn"
-          onClick={loadNotificationHistory}
-          disabled={loading}
-        >
-          🔄 Refresh
-        </button>
-      </div>
-
-      {error && (
-        <div className="error-message">
-          {error}
-        </div>
-      )}
-
-      {/* Statistics */}
-      <div className="history-stats">
-        <div className="stat-card">
-          <div className="stat-number">{notifications.length}</div>
-          <div className="stat-label">Total Notifications</div>
-        </div>
-        <div className="stat-card">
-          <div className="stat-number">
-            {notifications.filter(n => n.status === 'sent').length}
+        {error && (
+          <div className="alert alert-error">
+            <svg xmlns="http://www.w3.org/2000/svg" className="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            <span>{error}</span>
           </div>
-          <div className="stat-label">Successfully Sent</div>
-        </div>
-        <div className="stat-card">
-          <div className="stat-number">
-            {notifications.filter(n => 
-              new Date(n.sentAt) > new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)
-            ).length}
-          </div>
-          <div className="stat-label">This Week</div>
-        </div>
-      </div>
+        )}
 
-      {/* Notification List */}
-      <div className="notifications-list">
-        {notifications.length === 0 ? (
-          <div className="no-notifications">
-            <div className="no-notifications-icon">📭</div>
-            <h3>No Notifications Found</h3>
-            <p>
-              {filter === 'all' 
-                ? 'No notifications have been sent in the selected time range.'
-                : `No ${getNotificationTypeLabel(filter).toLowerCase()} notifications found.`
-              }
-            </p>
-          </div>
-        ) : (
-          notifications.map(notification => (
-            <div key={notification.id} className="notification-item">
-              <div className="notification-header">
-                <div className="notification-type">
-                  <span className="type-icon">
-                    {getNotificationIcon(notification.metadata?.type)}
-                  </span>
-                  <span className="type-label">
-                    {getNotificationTypeLabel(notification.metadata?.type)}
-                  </span>
-                </div>
-                <div className="notification-time">
-                  {formatDate(notification.sentAt)}
-                </div>
+        {/* Filters */}
+        <div className="card bg-base-100 shadow-xl">
+          <div className="card-body">
+            <div className="flex flex-col md:flex-row gap-4">
+              <div className="form-control flex-1">
+                <label className="label">
+                  <span className="label-text">Search</span>
+                </label>
+                <input
+                  type="text"
+                  placeholder="Search by message or recipient..."
+                  className="input input-bordered"
+                  value={filter}
+                  onChange={(e) => setFilter(e.target.value)}
+                />
               </div>
 
-              <div className="notification-content">
-                <h4 className="notification-subject">{notification.subject}</h4>
-                <div className="notification-recipient">
-                  <strong>To:</strong> {notification.to}
-                </div>
-                
-                {notification.metadata && (
-                  <div className="notification-metadata">
-                    {notification.metadata.eventId && (
-                      <span className="metadata-item">Event ID: {notification.metadata.eventId}</span>
-                    )}
-                    {notification.metadata.invoiceId && (
-                      <span className="metadata-item">Invoice ID: {notification.metadata.invoiceId}</span>
-                    )}
-                    {notification.metadata.amount && (
-                      <span className="metadata-item">Amount: ${notification.metadata.amount}</span>
-                    )}
-                  </div>
-                )}
-              </div>
-
-              <div className="notification-status">
-                <span 
-                  className="status-badge"
-                  style={{ backgroundColor: getStatusColor(notification.status) }}
+              <div className="form-control">
+                <label className="label">
+                  <span className="label-text">Type</span>
+                </label>
+                <select
+                  className="select select-bordered"
+                  value={filter}
+                  onChange={(e) => setFilter(e.target.value)}
                 >
-                  {notification.status?.toUpperCase() || 'SENT'}
-                </span>
+                  <option value="all">All Types</option>
+                  <option value="event">📅 Calendar Events</option>
+                  {userRole === 'parent' && (
+                    <>
+                      <option value="invoice">💰 Invoices</option>
+                      <option value="payment">✅ Payments</option>
+                    </>
+                  )}
+                  {userRole === 'admin' && (
+                    <>
+                      <option value="admin">🔧 Admin Notifications</option>
+                      <option value="system">🚨 System Alerts</option>
+                    </>
+                  )}
+                </select>
               </div>
             </div>
-          ))
-        )}
-      </div>
+          </div>
+        </div>
 
-      {/* Footer Info */}
-      <div className="history-footer">
-        <p>
-          <strong>📧 Email Delivery:</strong> Notifications are typically delivered within 1-2 minutes. 
-          If you're not receiving emails, please check your spam folder and contact support.
-        </p>
-        {userRole === 'admin' && (
-          <p>
-            <strong>🔧 Admin Note:</strong> This shows notifications sent by the system. 
-            Parent notification preferences can affect delivery. Users can manage their 
-            settings in their account preferences.
-          </p>
-        )}
+        {/* Notifications List */}
+        <div className="card bg-base-100 shadow-xl">
+          <div className="card-body">
+            {notifications.length === 0 ? (
+              <div className="text-center py-8 text-base-content/70">
+                No notifications found
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {notifications.map((notification) => (
+                  <div key={notification.id} className="card bg-base-200">
+                    <div className="card-body">
+                      <div className="flex items-start gap-4">
+                        <div className="text-2xl">
+                          {getNotificationIcon(notification.metadata?.type)}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex justify-between items-start mb-2">
+                            <div>
+                              <h3 className="font-bold">
+                                {notification.subject}
+                              </h3>
+                              <p className="text-sm text-base-content/70">
+                                {formatDate(notification.sentAt)}
+                              </p>
+                            </div>
+                            <div className={`badge ${getStatusColor(notification.status) === '#4caf50' ? 'badge-success' : getStatusColor(notification.status) === '#2196f3' ? 'badge-info' : getStatusColor(notification.status) === '#f44336' ? 'badge-error' : getStatusColor(notification.status) === '#ff9800' ? 'badge-warning' : 'badge-ghost'}`}>
+                              {notification.status}
+                            </div>
+                          </div>
+                          <p className="text-base-content whitespace-pre-wrap">
+                            {notification.message}
+                          </p>
+                          {notification.error && (
+                            <div className="mt-2 text-sm text-error">
+                              Error: {notification.error}
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Stats */}
+        <div className="stats shadow">
+          <div className="stat">
+            <div className="stat-title">Total Notifications</div>
+            <div className="stat-value">{notifications.length}</div>
+            <div className="stat-desc">In selected filter</div>
+          </div>
+          
+          <div className="stat">
+            <div className="stat-title">Sent</div>
+            <div className="stat-value text-success">
+              {notifications.filter(n => n.status === 'sent').length}
+            </div>
+            <div className="stat-desc text-success">Delivered successfully</div>
+          </div>
+          
+          <div className="stat">
+            <div className="stat-title">Failed</div>
+            <div className="stat-value text-error">
+              {notifications.filter(n => n.status === 'failed').length}
+            </div>
+            <div className="stat-desc text-error">Delivery failed</div>
+          </div>
+          
+          <div className="stat">
+            <div className="stat-title">Pending</div>
+            <div className="stat-value text-warning">
+              {notifications.filter(n => n.status === 'pending').length}
+            </div>
+            <div className="stat-desc text-warning">Awaiting delivery</div>
+          </div>
+        </div>
       </div>
     </div>
   );

@@ -224,194 +224,239 @@ const SignupForm = () => {
   };
   
   if (userType === 'admin') {
-    return (
-      <div className="auth-form-container">
-        <div className="auth-tabs">
-          <Link href={`/auth/signup?type=${userType}`} className="tab active">
-            Sign up
-          </Link>
-          <Link href={`/auth/login?type=${userType}`} className="tab">
-            Log in
-          </Link>
-        </div>
-        
-        <h2 className="auth-title">Admin Sign Up</h2>
-        
-        <div className="error-message">
-          <p>Admin accounts can only be created by existing administrators.</p>
-          <p>Please contact the daycare administrator for assistance.</p>
+      return (
+    <div className="min-h-screen flex flex-col items-center justify-center p-4">
+      <div className="card w-full max-w-md bg-base-100 shadow-xl">
+        <div className="card-body">
+          <div className="tabs tabs-boxed justify-center mb-6">
+            <Link href={`/auth/signup?type=${userType}`} className="tab tab-active">
+              Sign up
+            </Link>
+            <Link href={`/auth/login?type=${userType}`} className="tab">
+              Log in
+            </Link>
+          </div>
+          
+          <h2 className="card-title justify-center mb-6">Admin Sign Up</h2>
+          
+          <div className="alert alert-warning">
+            <svg xmlns="http://www.w3.org/2000/svg" className="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+            </svg>
+            <div>
+              <h3 className="font-bold">Admin Registration Restricted</h3>
+              <p>Admin accounts can only be created by existing administrators.</p>
+              <p>Please contact the daycare administrator for assistance.</p>
+            </div>
+          </div>
         </div>
       </div>
-    );
+    </div>
+  );
   }
   
   return (
-    <div className="auth-form-container">
-      <div className="auth-tabs">
-        <Link href={`/auth/signup?type=${userType}`} className="tab active">
-          Sign up
-        </Link>
-        <Link href={`/auth/login?type=${userType}`} className="tab">
-          Log in
-        </Link>
-      </div>
-      
-      <h2 className="auth-title">Parent Sign Up</h2>
-      <p className="auth-subtitle">Create your account to access your child's daycare information</p>
-      
-      {error && (
-        <div className="error-message">
-          <p>{error}</p>
-          {debugInfo && (
-            <details style={{ marginTop: '1rem' }}>
-              <summary>Debug Info</summary>
-              <p style={{ fontSize: '0.9rem', color: '#666' }}>{debugInfo}</p>
-            </details>
-          )}
-        </div>
-      )}
-      
-      {successMessage && (
-        <div className="success-message">
-          <pre>{successMessage}</pre>
-        </div>
-      )}
-      
-      {debugInfo && !error && !successMessage && (
-        <div className="status-message">
-          Status: {debugInfo}
-        </div>
-      )}
-      
-      {!successMessage && (
-        <form onSubmit={handleSubmit} className="auth-form">
-          <div className="form-group">
-            <label htmlFor="accessCode">Registration Access Code*</label>
-            <input
-              type="text"
-              id="accessCode"
-              name="accessCode"
-              value={formData.accessCode}
-              onChange={handleChange}
-              required
-              className="auth-input"
-              disabled={loading}
-              placeholder="Enter access code (e.g., XB7G97DM)"
-              style={{ textTransform: 'uppercase' }}
-            />
-            <small>Enter the 8-character code provided by the daycare</small>
+    <div className="min-h-screen flex flex-col items-center justify-center p-4">
+      <div className="card w-full max-w-2xl bg-base-100 shadow-xl">
+        <div className="card-body">
+          <div className="tabs tabs-boxed justify-center mb-6">
+            <Link href={`/auth/signup?type=${userType}`} className="tab tab-active">
+              Sign up
+            </Link>
+            <Link href={`/auth/login?type=${userType}`} className="tab">
+              Log in
+            </Link>
           </div>
           
-          <div className="name-inputs">
-            <div className="form-group half-width">
-              <label htmlFor="firstName">First name</label>
-              <input
-                type="text"
-                id="firstName"
-                name="firstName"
-                value={formData.firstName}
-                onChange={handleChange}
-                required
-                className="auth-input"
+          <h2 className="card-title justify-center mb-2">Parent Sign Up</h2>
+          <p className="text-center text-base-content/70 mb-6">Create your account to access your child's daycare information</p>
+          
+          {error && (
+            <div className="alert alert-error mb-6">
+              <svg xmlns="http://www.w3.org/2000/svg" className="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              <div>
+                <p>{error}</p>
+                {debugInfo && (
+                  <details className="mt-2">
+                    <summary className="cursor-pointer">Debug Info</summary>
+                    <p className="mt-2 text-sm opacity-70">{debugInfo}</p>
+                  </details>
+                )}
+              </div>
+            </div>
+          )}
+          
+          {successMessage && (
+            <div className="alert alert-success mb-6">
+              <svg xmlns="http://www.w3.org/2000/svg" className="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              <pre className="whitespace-pre-wrap text-sm">{successMessage}</pre>
+            </div>
+          )}
+          
+          {debugInfo && !error && !successMessage && (
+            <div className="alert alert-info mb-6">
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" className="stroke-current shrink-0 w-6 h-6">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+              </svg>
+              <span>Status: {debugInfo}</span>
+            </div>
+          )}
+          
+          {!successMessage && (
+            <form onSubmit={handleSubmit} className="form-control gap-4">
+              <div className="form-control">
+                <label className="label">
+                  <span className="label-text">Registration Access Code*</span>
+                </label>
+                <input
+                  type="text"
+                  name="accessCode"
+                  value={formData.accessCode}
+                  onChange={handleChange}
+                  required
+                  className="input input-bordered w-full uppercase"
+                  disabled={loading}
+                  placeholder="Enter access code (e.g., XB7G97DM)"
+                />
+                <label className="label">
+                  <span className="label-text-alt">Enter the 8-character code provided by the daycare</span>
+                </label>
+              </div>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="form-control">
+                  <label className="label">
+                    <span className="label-text">First name</span>
+                  </label>
+                  <input
+                    type="text"
+                    name="firstName"
+                    value={formData.firstName}
+                    onChange={handleChange}
+                    required
+                    className="input input-bordered w-full"
+                    disabled={loading}
+                    placeholder="Your first name"
+                  />
+                </div>
+                
+                <div className="form-control">
+                  <label className="label">
+                    <span className="label-text">Last name</span>
+                  </label>
+                  <input
+                    type="text"
+                    name="lastName"
+                    value={formData.lastName}
+                    onChange={handleChange}
+                    required
+                    className="input input-bordered w-full"
+                    disabled={loading}
+                    placeholder="Your last name"
+                  />
+                </div>
+              </div>
+              
+              <div className="form-control">
+                <label className="label">
+                  <span className="label-text">Email address</span>
+                </label>
+                <input
+                  type="email"
+                  name="email"
+                  value={formData.email}
+                  onChange={handleChange}
+                  required
+                  className="input input-bordered w-full"
+                  disabled={loading}
+                  placeholder="Enter your email address"
+                />
+                <label className="label">
+                  <span className="label-text-alt text-warning">⚠️ You'll need to verify this email before you can log in</span>
+                </label>
+              </div>
+              
+              <div className="form-control">
+                <label className="label">
+                  <span className="label-text">Password</span>
+                </label>
+                <input
+                  type="password"
+                  name="password"
+                  value={formData.password}
+                  onChange={handleChange}
+                  required
+                  className="input input-bordered w-full"
+                  disabled={loading}
+                  minLength="6"
+                  placeholder="Create a secure password"
+                />
+              </div>
+              
+              <div className="form-control">
+                <label className="label">
+                  <span className="label-text">Confirm Password</span>
+                </label>
+                <input
+                  type="password"
+                  name="confirmPassword"
+                  value={formData.confirmPassword}
+                  onChange={handleChange}
+                  required
+                  className="input input-bordered w-full"
+                  disabled={loading}
+                  placeholder="Confirm your password"
+                />
+              </div>
+              
+              <button 
+                type="submit" 
+                className={`btn btn-primary w-full ${loading ? 'loading' : ''}`}
                 disabled={loading}
-                placeholder="Your first name"
-              />
+              >
+                {loading ? 'Creating Your Account...' : 'Create Parent Account'}
+              </button>
+            </form>
+          )}
+
+          <div className="divider"></div>
+
+          <div className="space-y-6 text-center">
+            <div>
+              <p className="text-base-content/70">Already have an account?</p>
+              <Link href={`/auth/login?type=parent`} className="link link-primary">
+                Log in instead
+              </Link>
             </div>
             
-            <div className="form-group half-width">
-              <label htmlFor="lastName">Last name</label>
-              <input
-                type="text"
-                id="lastName"
-                name="lastName"
-                value={formData.lastName}
-                onChange={handleChange}
-                required
-                className="auth-input"
-                disabled={loading}
-                placeholder="Your last name"
-              />
+            <div className="card bg-base-200">
+              <div className="card-body">
+                <h3 className="font-semibold mb-2">After creating your account, you can:</h3>
+                <ul className="space-y-2 text-left">
+                  <li className="flex items-center gap-2">
+                    <span className="text-lg">📱</span>
+                    <span>View your child's daily activities</span>
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <span className="text-lg">📅</span>
+                    <span>Check schedules and events</span>
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <span className="text-lg">💬</span>
+                    <span>Message daycare staff</span>
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <span className="text-lg">🔗</span>
+                    <span>Link your Google account for easy login (optional)</span>
+                  </li>
+                </ul>
+              </div>
             </div>
           </div>
-          
-          <div className="form-group">
-            <label htmlFor="email">Email address</label>
-            <input
-              type="email"
-              id="email"
-              name="email"
-              value={formData.email}
-              onChange={handleChange}
-              required
-              className="auth-input"
-              disabled={loading}
-              placeholder="Enter your email address"
-            />
-            <small>⚠️ You'll need to verify this email before you can log in</small>
-          </div>
-          
-          <div className="form-group">
-            <label htmlFor="password">Password</label>
-            <input
-              type="password"
-              id="password"
-              name="password"
-              value={formData.password}
-              onChange={handleChange}
-              required
-              className="auth-input"
-              disabled={loading}
-              minLength="6"
-              placeholder="Create a secure password"
-            />
-          </div>
-          
-          <div className="form-group">
-            <label htmlFor="confirmPassword">Confirm Password</label>
-            <input
-              type="password"
-              id="confirmPassword"
-              name="confirmPassword"
-              value={formData.confirmPassword}
-              onChange={handleChange}
-              required
-              className="auth-input"
-              disabled={loading}
-              placeholder="Confirm your password"
-            />
-          </div>
-          
-          <button 
-            type="submit" 
-            className="submit-btn"
-            disabled={loading}
-          >
-            {loading ? (
-              <div className="btn-loading">
-                <div className="spinner"></div>
-                <span>Creating Your Account...</span>
-              </div>
-            ) : (
-              'Create Parent Account'
-            )}
-          </button>
-        </form>
-      )}
-
-      <div className="auth-footer">
-        <p>Already have an account?</p>
-        <Link href={`/auth/login?type=parent`} className="auth-link">
-          Log in instead
-        </Link>
-        
-        <div className="signup-benefits">
-          <h4>After creating your account, you can:</h4>
-          <ul>
-            <li>📱 View your child's daily activities</li>
-            <li>📅 Check schedules and events</li>
-            <li>💬 Message daycare staff</li>
-            <li>🔗 Link your Google account for easy login (optional)</li>
-          </ul>
         </div>
       </div>
     </div>

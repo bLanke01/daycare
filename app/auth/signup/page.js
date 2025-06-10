@@ -18,13 +18,8 @@ export default function Signup() {
   }
   
   return (
-    <div className="auth-page">
-      <div className="auth-page-title">
-        <h1>SignUp Page</h1>
-      </div>
-      <div className="auth-container">
-        <SignupForm />
-      </div>
+    <div className="min-h-screen bg-base-200 flex flex-col items-center justify-center p-4">
+      <SignupForm />
     </div>
   );
 }

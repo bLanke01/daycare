@@ -19,53 +19,70 @@ const UserTypeSelection = () => {
     router.push('/auth/login?type=admin');
   };
 
-  // Admin signup is disabled - this would only show an information message
   const handleSignupAsStaff = () => {
     alert('Admin accounts can only be created by existing administrators. Please contact the daycare administrator for assistance.');
   };
 
   return (
-    <div className="user-type-selection">
-      <div className="auth-logo">
-        <div className="logo-circle">D</div>
-        <h1>Daycare Management</h1>
-      </div>
-      
-      <div className="selection-container">
-        <div className="selection-card">
-          <h2>Login as Parent</h2>
-          <button 
-            className="auth-button login-btn"
-            onClick={handleLoginAsCustomer}
-          >
-            Log in
-          </button>
-          <button 
-            className="auth-button signup-btn"
-            onClick={handleSignupAsCustomer}
-          >
-            Sign up
-          </button>
-        </div>
-        
-        <div className="selection-divider"></div>
-        
-        <div className="selection-card">
-          <h2>Login as Admin</h2>
-          <button 
-            className="auth-button login-btn"
-            onClick={handleLoginAsStaff}
-          >
-            Log in
-          </button>
-          <button 
-            className="auth-button signup-btn disabled"
-            onClick={handleSignupAsStaff}
-            title="Admin accounts can only be created by existing administrators"
-          >
-            Sign up
-          </button>
-          <p className="admin-note">* Admin accounts are pre-created by system administrators</p>
+    <div className="min-h-screen flex flex-col items-center justify-center p-4">
+      <div className="card w-full max-w-3xl bg-base-100 shadow-xl">
+        <div className="card-body">
+          <div className="flex flex-col items-center gap-4 mb-8">
+            <div className="avatar placeholder">
+              <div className="bg-primary text-primary-content rounded-full w-16">
+                <span className="text-2xl">D</span>
+              </div>
+            </div>
+            <h1 className="text-2xl font-bold text-center">Daycare Management</h1>
+          </div>
+          
+          <div className="grid md:grid-cols-2 gap-8">
+            {/* Parent Card */}
+            <div className="card bg-base-200">
+              <div className="card-body items-center text-center">
+                <h2 className="card-title mb-4">Parent Access</h2>
+                <div className="flex flex-col gap-3 w-full">
+                  <button 
+                    className="btn btn-primary"
+                    onClick={handleLoginAsCustomer}
+                  >
+                    Log in as Parent
+                  </button>
+                  <button 
+                    className="btn btn-secondary"
+                    onClick={handleSignupAsCustomer}
+                  >
+                    Sign up as Parent
+                  </button>
+                </div>
+              </div>
+            </div>
+            
+            {/* Admin Card */}
+            <div className="card bg-base-200">
+              <div className="card-body items-center text-center">
+                <h2 className="card-title mb-4">Staff/Admin Access</h2>
+                <div className="flex flex-col gap-3 w-full">
+                  <button 
+                    className="btn btn-primary"
+                    onClick={handleLoginAsStaff}
+                  >
+                    Log in as Staff
+                  </button>
+                  <button 
+                    className="btn btn-disabled"
+                    onClick={handleSignupAsStaff}
+                    title="Admin accounts can only be created by existing administrators"
+                  >
+                    Sign up as Staff
+                  </button>
+                </div>
+                <div className="mt-2">
+                  <p className="text-sm text-base-content/70">* Admin accounts are pre-created by system administrators</p>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </div>

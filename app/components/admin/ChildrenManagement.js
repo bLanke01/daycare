@@ -213,24 +213,24 @@ const ChildrenManagement = () => {
       // Show success message with access code
       const successMsg = `🎉 SUCCESS! Child added to the system!
 
-👶 Child: ${newChildData.firstName} ${newChildData.lastName}
-📧 Parent: ${newChildData.parentFirstName} ${newChildData.parentLastName}
-📧 Email: ${newChildData.parentEmail}
-📱 Phone: ${newChildData.parentPhone}
-🏫 Group: ${childData.group}
+      👶 Child: ${newChildData.firstName} ${newChildData.lastName}
+      📧 Parent: ${newChildData.parentFirstName} ${newChildData.parentLastName}
+      📧 Email: ${newChildData.parentEmail}
+      📱 Phone: ${newChildData.parentPhone}
+      🏫 Group: ${childData.group}
 
-🔑 PARENT ACCESS CODE: ${accessCode}
+      🔑 PARENT ACCESS CODE: ${accessCode}
 
-📋 IMPORTANT INSTRUCTIONS FOR PARENT:
-1. Give this access code to the parent
-2. Parent should visit your signup page
-3. Parent enters this code during registration
-4. Code will link their account to their child's profile
-5. Parent can then view daily updates, activities, meals, etc.
+      📋 IMPORTANT INSTRUCTIONS FOR PARENT:
+      1. Give this access code to the parent
+      2. Parent should visit your signup page
+      3. Parent enters this code during registration
+      4. Code will link their account to their child's profile
+      5. Parent can then view daily updates, activities, meals, etc.
 
-⏰ Code expires in 30 days
-💾 Code has been saved to the system
-🔗 Parent registration link: [Your website]/auth/signup?type=parent`;
+      ⏰ Code expires in 30 days
+      💾 Code has been saved to the system
+      🔗 Parent registration link: [Your website]/auth/signup?type=parent`;
 
       setSuccessMessage(successMsg);
       
@@ -308,160 +308,165 @@ const ChildrenManagement = () => {
   };
 
   return (
-    <div className="children-management">
-      <div className="page-header">
-        <h1>Manage Children</h1>
-        <div className="header-actions">
-          <span className="children-count">Total: {children.length} children</span>
+    <div className="space-y-6">
+      <div className="flex flex-col sm:flex-row gap-4 items-center justify-between mb-4">
+        <h2 className="text-2xl font-bold">Manage Children</h2>
+        <div className="flex items-center gap-4">
+          <span className="badge badge-lg">{children.length} children</span>
           <button 
-            className="add-child-btn" 
+            className="btn btn-primary"
             onClick={() => setShowAddChildModal(true)}
           >
-            ➕ Add New Child
+            Add New Child
           </button>
         </div>
       </div>
 
       {error && (
-        <div className="error-message">
-          {error}
-          <button 
-            className="close-error-btn"
-            onClick={() => setError('')}
-          >
-            ×
-          </button>
+        <div className="alert alert-error shadow-lg">
+          <svg xmlns="http://www.w3.org/2000/svg" className="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+          <span>{error}</span>
+          <button className="btn btn-square btn-ghost btn-sm" onClick={() => setError('')}>✕</button>
         </div>
       )}
 
       {successMessage && (
-        <div className="success-message-modal">
-          <div className="success-modal-content">
-            <h3>🎉 Child Successfully Added!</h3>
-            <div className="access-code-display">
-              <pre>{successMessage}</pre>
-              <div className="success-actions">
-                <button 
-                  className="copy-code-btn"
-                  onClick={() => {
-                    // Extract just the access code for copying
-                    const codeMatch = successMessage.match(/ACCESS CODE: ([A-Z0-9]{8})/);
-                    if (codeMatch) {
-                      navigator.clipboard.writeText(codeMatch[1]);
-                      alert('Access code copied to clipboard!');
-                    }
-                  }}
-                >
-                  📋 Copy Access Code
-                </button>
-                <button 
-                  className="print-btn"
-                  onClick={() => {
-                    window.print();
-                  }}
-                >
-                  🖨️ Print Instructions
-                </button>
-                <button 
-                  className="close-success-btn"
-                  onClick={() => {
-                    setSuccessMessage('');
-                    setShowAddChildModal(false);
-                  }}
-                >
-                  ✅ Close
-                </button>
-              </div>
+        <div className="modal modal-open">
+          <div className="modal-box">
+            <h3 className="font-bold text-lg mb-4">🎉 Child Successfully Added!</h3>
+            <div className="bg-base-200 p-4 rounded-lg">
+              <pre className="whitespace-pre-wrap text-sm">{successMessage}</pre>
+            </div>
+            <div className="modal-action">
+              <button 
+                className="btn btn-outline"
+                onClick={() => {
+                  const codeMatch = successMessage.match(/ACCESS CODE: ([A-Z0-9]{8})/);
+                  if (codeMatch) {
+                    navigator.clipboard.writeText(codeMatch[1]);
+                    alert('Access code copied to clipboard!');
+                  }
+                }}
+              >
+                Copy Access Code
+              </button>
+              <button 
+                className="btn btn-outline"
+                onClick={() => window.print()}
+              >
+                Print Instructions
+              </button>
+              <button 
+                className="btn btn-primary"
+                onClick={() => {
+                  setSuccessMessage('');
+                  setShowAddChildModal(false);
+                }}
+              >
+                Close
+              </button>
             </div>
           </div>
         </div>
       )}
       
-      <div className="filters">
-        <div className="search-bar">
-          <input
-            type="text"
-            placeholder="Search by child or parent name..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-          />
+      <div className="flex flex-col sm:flex-row gap-4 items-center justify-between mb-4">
+        <div className="form-control w-full sm:w-auto">
+          <div className="input-group">
+            <input
+              type="text"
+              placeholder="Search by child or parent name..."
+              className="input input-bordered w-full"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
+            <button className="btn btn-square">
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+              </svg>
+            </button>
+          </div>
         </div>
         
-        <div className="group-filter">
-          <label htmlFor="groupFilter">Filter by Group:</label>
-          <select 
-            id="groupFilter"
-            value={filterGroup}
-            onChange={(e) => setFilterGroup(e.target.value)}
-          >
-            <option value="All">All Groups</option>
-            <option value="Infant">Infant (0-18 months)</option>
-            <option value="Toddler">Toddler (18 months-3 years)</option>
-            <option value="Pre-K">Pre-K (3-5 years)</option>
-          </select>
-        </div>
+        <select 
+          className="select select-bordered w-full sm:w-auto"
+          value={filterGroup}
+          onChange={(e) => setFilterGroup(e.target.value)}
+        >
+          <option value="All">All Groups</option>
+          <option value="Infant">Infant (0-18 months)</option>
+          <option value="Toddler">Toddler (18 months-3 years)</option>
+          <option value="Pre-K">Pre-K (3-5 years)</option>
+        </select>
       </div>
       
-      <div className="children-grid">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {loading && children.length === 0 ? (
-          <div className="loading">Loading children...</div>
+          <div className="col-span-full flex justify-center items-center min-h-[400px]">
+            <span className="loading loading-spinner loading-lg"></span>
+          </div>
         ) : filteredChildren.length === 0 ? (
-          <div className="no-children">
+          <div className="col-span-full text-center py-8">
             {children.length === 0 ? (
               <div>
-                <h3>No children in the system yet</h3>
-                <p>Click "Add New Child" to register your first child.</p>
+                <h3 className="font-bold mb-2">No children in the system yet</h3>
+                <p className="text-base-content/70">Click "Add New Child" to register your first child.</p>
               </div>
             ) : (
-              <div>No children found matching your search criteria.</div>
+              <div className="text-base-content/70">No children found matching your search criteria.</div>
             )}
           </div>
         ) : (
           filteredChildren.map(child => (
-            <div key={child.id} className="child-card-admin">
-              <div className="child-avatar">
-                {child.gender === 'Female' ? '👧' : child.gender === 'Male' ? '👦' : '🧒'}
-              </div>
-              
-              <div className="child-basic-info">
-                <h3>{child.firstName} {child.lastName}</h3>
-                <p className="child-age">Age: {calculateAge(child.dateOfBirth)}</p>
-                <p className="child-group">Group: {child.group}</p>
+            <div key={child.id} className="card bg-base-100 shadow-xl">
+              <div className="card-body">
+                <div className="flex items-center gap-4 mb-4">
+                  <div className="text-4xl">
+                    {child.gender === 'Female' ? '👧' : child.gender === 'Male' ? '👦' : '🧒'}
+                  </div>
+                  <div>
+                    <h3 className="card-title">{child.firstName} {child.lastName}</h3>
+                    <p className="text-sm opacity-75">Age: {calculateAge(child.dateOfBirth)}</p>
+                    <div className="badge badge-outline">{child.group}</div>
+                  </div>
+                </div>
                 
-                <div className="parent-info">
-                  <p className="parent-name">
+                <div className="space-y-2">
+                  <p className="text-sm">
                     Parent: {child.parentFirstName} {child.parentLastName}
                   </p>
-                  <p className="parent-contact">{child.parentEmail}</p>
-                  <span className={`registration-status ${child.parentRegistered ? 'registered' : 'pending'}`}>
-                    {child.parentRegistered ? '✅ Parent Registered' : '⏳ Awaiting Parent Registration'}
-                  </span>
+                  <p className="text-sm opacity-75">{child.parentEmail}</p>
+                  <div className={`badge ${child.parentRegistered ? 'badge-success' : 'badge-warning'}`}>
+                    {child.parentRegistered ? 'Parent Registered' : 'Awaiting Registration'}
+                  </div>
                   {!child.parentRegistered && (
-                    <div className="access-code-info">
-                      <small>Access Code: <span className="access-code">{child.accessCode}</span></small>
+                    <div className="text-sm bg-base-200 p-2 rounded">
+                      Access Code: <span className="font-mono">{child.accessCode}</span>
                     </div>
                   )}
                 </div>
-              </div>
-              
-              <div className="card-actions">
-                <button 
-                  className="view-btn"
-                  onClick={() => handleViewChild(child)}
-                >
-                  👁️ View Details
-                </button>
-                {!child.parentRegistered && (
+                
+                <div className="card-actions justify-end mt-4">
                   <button 
-                    className="resend-code-btn"
-                    onClick={() => {
-                      navigator.clipboard.writeText(child.accessCode);
-                      alert(`Access code ${child.accessCode} copied to clipboard!`);
-                    }}
+                    className="btn btn-primary btn-sm"
+                    onClick={() => handleViewChild(child)}
                   >
-                    📋 Copy Access Code
+                    View Details
                   </button>
-                )}
+                  {!child.parentRegistered && (
+                    <button 
+                      className="btn btn-ghost btn-sm"
+                      onClick={() => {
+                        navigator.clipboard.writeText(child.accessCode);
+                        alert(`Access code ${child.accessCode} copied to clipboard!`);
+                      }}
+                    >
+                      Copy Code
+                    </button>
+                  )}
+                </div>
               </div>
             </div>
           ))
@@ -470,327 +475,374 @@ const ChildrenManagement = () => {
 
       {/* Add Child Modal */}
       {showAddChildModal && (
-        <div className="modal-overlay">
-          <div className="modal extra-large-modal">
-            <div className="modal-header">
-              <h2>➕ Add New Child to Daycare</h2>
-              <button 
-                className="close-btn"
-                onClick={() => setShowAddChildModal(false)}
-              >
-                ×
-              </button>
-            </div>
+        <div className="modal modal-open">
+          <div className="modal-box max-w-4xl">
+            <h3 className="font-bold text-lg mb-6">Add New Child to Daycare</h3>
             
-            <form onSubmit={handleAddChild} className="add-child-form">
+            <form onSubmit={handleAddChild} className="space-y-6">
               {/* Child Information Section */}
-              <div className="form-section">
-                <h3>👶 Child Information</h3>
-                
-                <div className="form-row">
-                  <div className="form-group">
-                    <label htmlFor="firstName">First Name *</label>
-                    <input
-                      type="text"
-                      id="firstName"
-                      name="firstName"
-                      value={newChildData.firstName}
-                      onChange={handleNewChildChange}
-                      required
-                      placeholder="Enter child's first name"
-                    />
+              <div className="card bg-base-100">
+                <div className="card-body">
+                  <h4 className="card-title text-base">👶 Child Information</h4>
+                  
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="form-control">
+                      <label className="label">
+                        <span className="label-text">First Name *</span>
+                      </label>
+                      <input
+                        type="text"
+                        className="input input-bordered"
+                        name="firstName"
+                        value={newChildData.firstName}
+                        onChange={handleNewChildChange}
+                        required
+                        placeholder="Enter child's first name"
+                      />
+                    </div>
+                    
+                    <div className="form-control">
+                      <label className="label">
+                        <span className="label-text">Last Name *</span>
+                      </label>
+                      <input
+                        type="text"
+                        className="input input-bordered"
+                        name="lastName"
+                        value={newChildData.lastName}
+                        onChange={handleNewChildChange}
+                        required
+                        placeholder="Enter child's last name"
+                      />
+                    </div>
                   </div>
                   
-                  <div className="form-group">
-                    <label htmlFor="lastName">Last Name *</label>
-                    <input
-                      type="text"
-                      id="lastName"
-                      name="lastName"
-                      value={newChildData.lastName}
-                      onChange={handleNewChildChange}
-                      required
-                      placeholder="Enter child's last name"
-                    />
-                  </div>
-                </div>
-                
-                <div className="form-row">
-                  <div className="form-group">
-                    <label htmlFor="dateOfBirth">Date of Birth *</label>
-                    <input
-                      type="date"
-                      id="dateOfBirth"
-                      name="dateOfBirth"
-                      value={newChildData.dateOfBirth}
-                      onChange={handleNewChildChange}
-                      required
-                      max={new Date().toISOString().split('T')[0]}
-                    />
-                  </div>
-                  
-                  <div className="form-group">
-                    <label htmlFor="gender">Gender *</label>
-                    <select
-                      id="gender"
-                      name="gender"
-                      value={newChildData.gender}
-                      onChange={handleNewChildChange}
-                      required
-                    >
-                      <option value="">Select Gender</option>
-                      <option value="Male">Male</option>
-                      <option value="Female">Female</option>
-                      <option value="Other">Other</option>
-                    </select>
-                  </div>
-                  
-                  <div className="form-group">
-                    <label htmlFor="group">Age Group</label>
-                    <select
-                      id="group"
-                      name="group"
-                      value={newChildData.group}
-                      onChange={handleNewChildChange}
-                    >
-                      <option value="">Auto-calculated</option>
-                      <option value="Infant">Infant (0-18 months)</option>
-                      <option value="Toddler">Toddler (18 months-3 years)</option>
-                      <option value="Pre-K">Pre-K (3-5 years)</option>
-                    </select>
-                    <small>Will be automatically determined based on date of birth</small>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div className="form-control">
+                      <label className="label">
+                        <span className="label-text">Date of Birth *</span>
+                      </label>
+                      <input
+                        type="date"
+                        className="input input-bordered"
+                        name="dateOfBirth"
+                        value={newChildData.dateOfBirth}
+                        onChange={handleNewChildChange}
+                        required
+                        max={new Date().toISOString().split('T')[0]}
+                      />
+                    </div>
+                    
+                    <div className="form-control">
+                      <label className="label">
+                        <span className="label-text">Gender *</span>
+                      </label>
+                      <select
+                        className="select select-bordered"
+                        name="gender"
+                        value={newChildData.gender}
+                        onChange={handleNewChildChange}
+                        required
+                      >
+                        <option value=""></option>
+                        <option value="Male">Male</option>
+                        <option value="Female">Female</option>
+                      </select>
+                    </div>
+                    
+                    <div className="form-control">
+                      <label className="label">
+                        <span className="label-text">Age Group</span>
+                      </label>
+                      <select
+                        className="select select-bordered"
+                        name="group"
+                        value={newChildData.group}
+                        onChange={handleNewChildChange}
+                      >
+                        <option value="">Auto-calculated</option>
+                        <option value="Infant">Infant (0-18 months)</option>
+                        <option value="Toddler">Toddler (18 months-3 years)</option>
+                        <option value="Pre-K">Pre-K (3-5 years)</option>
+                      </select>
+                      <label className="label">
+                        <span className="label-text-alt">Will be automatically determined based on date of birth</span>
+                      </label>
+                    </div>
                   </div>
                 </div>
               </div>
 
               {/* Parent Information Section */}
-              <div className="form-section">
-                <h3>👨‍👩‍👧‍👦 Parent/Guardian Information</h3>
-                
-                <div className="form-row">
-                  <div className="form-group">
-                    <label htmlFor="parentFirstName">Parent's First Name *</label>
-                    <input
-                      type="text"
-                      id="parentFirstName"
-                      name="parentFirstName"
-                      value={newChildData.parentFirstName}
-                      onChange={handleNewChildChange}
-                      required
-                      placeholder="Enter parent's first name"
-                    />
+              <div className="card bg-base-100">
+                <div className="card-body">
+                  <h4 className="card-title text-base">👨‍👩‍👧‍👦 Parent/Guardian Information</h4>
+                  
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="form-control">
+                      <label className="label">
+                        <span className="label-text">Parent's First Name *</span>
+                      </label>
+                      <input
+                        type="text"
+                        className="input input-bordered"
+                        name="parentFirstName"
+                        value={newChildData.parentFirstName}
+                        onChange={handleNewChildChange}
+                        required
+                        placeholder="Enter parent's first name"
+                      />
+                    </div>
+                    
+                    <div className="form-control">
+                      <label className="label">
+                        <span className="label-text">Parent's Last Name *</span>
+                      </label>
+                      <input
+                        type="text"
+                        className="input input-bordered"
+                        name="parentLastName"
+                        value={newChildData.parentLastName}
+                        onChange={handleNewChildChange}
+                        required
+                        placeholder="Enter parent's last name"
+                      />
+                    </div>
                   </div>
                   
-                  <div className="form-group">
-                    <label htmlFor="parentLastName">Parent's Last Name *</label>
-                    <input
-                      type="text"
-                      id="parentLastName"
-                      name="parentLastName"
-                      value={newChildData.parentLastName}
-                      onChange={handleNewChildChange}
-                      required
-                      placeholder="Enter parent's last name"
-                    />
-                  </div>
-                </div>
-                
-                <div className="form-row">
-                  <div className="form-group">
-                    <label htmlFor="parentEmail">Email Address *</label>
-                    <input
-                      type="email"
-                      id="parentEmail"
-                      name="parentEmail"
-                      value={newChildData.parentEmail}
-                      onChange={handleNewChildChange}
-                      required
-                      placeholder="parent@email.com"
-                    />
-                    <small>This email will be used for the parent portal account</small>
-                  </div>
-                  
-                  <div className="form-group">
-                    <label htmlFor="parentPhone">Phone Number *</label>
-                    <input
-                      type="tel"
-                      id="parentPhone"
-                      name="parentPhone"
-                      value={newChildData.parentPhone}
-                      onChange={handleNewChildChange}
-                      required
-                      placeholder="(555) 123-4567"
-                    />
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="form-control">
+                      <label className="label">
+                        <span className="label-text">Email Address *</span>
+                      </label>
+                      <input
+                        type="email"
+                        className="input input-bordered"
+                        name="parentEmail"
+                        value={newChildData.parentEmail}
+                        onChange={handleNewChildChange}
+                        required
+                        placeholder="parent@email.com"
+                      />
+                      <label className="label">
+                        <span className="label-text-alt">This email will be used for the parent portal account</span>
+                      </label>
+                    </div>
+                    
+                    <div className="form-control">
+                      <label className="label">
+                        <span className="label-text">Phone Number *</span>
+                      </label>
+                      <input
+                        type="tel"
+                        className="input input-bordered"
+                        name="parentPhone"
+                        value={newChildData.parentPhone}
+                        onChange={handleNewChildChange}
+                        required
+                        placeholder="(555) 123-4567"
+                      />
+                    </div>
                   </div>
                 </div>
               </div>
 
               {/* Medical Information Section */}
-              <div className="form-section">
-                <h3>🏥 Medical Information</h3>
-                
-                <div className="form-row">
-                  <div className="form-group">
-                    <label htmlFor="allergies">Allergies</label>
-                    <input
-                      type="text"
-                      id="allergies"
-                      name="allergies"
-                      value={newChildData.allergies}
-                      onChange={handleNewChildChange}
-                      placeholder="e.g., Peanuts, Dairy, None (separated by commas)"
-                    />
+              <div className="card bg-base-100">
+                <div className="card-body">
+                  <h4 className="card-title text-base">🏥 Medical Information</h4>
+                  
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="form-control">
+                      <label className="label">
+                        <span className="label-text">Allergies</span>
+                      </label>
+                      <input
+                        type="text"
+                        className="input input-bordered"
+                        name="allergies"
+                        value={newChildData.allergies}
+                        onChange={handleNewChildChange}
+                        placeholder="e.g., Peanuts, Dairy, None (separated by commas)"
+                      />
+                    </div>
+                    
+                    <div className="form-control">
+                      <label className="label">
+                        <span className="label-text">Medical Conditions</span>
+                      </label>
+                      <input
+                        type="text"
+                        className="input input-bordered"
+                        name="medicalConditions"
+                        value={newChildData.medicalConditions}
+                        onChange={handleNewChildChange}
+                        placeholder="e.g., Asthma, Diabetes, None (separated by commas)"
+                      />
+                    </div>
                   </div>
                   
-                  <div className="form-group">
-                    <label htmlFor="medicalConditions">Medical Conditions</label>
-                    <input
-                      type="text"
-                      id="medicalConditions"
-                      name="medicalConditions"
-                      value={newChildData.medicalConditions}
-                      onChange={handleNewChildChange}
-                      placeholder="e.g., Asthma, Diabetes, None (separated by commas)"
-                    />
-                  </div>
-                </div>
-                
-                <div className="form-row">
-                  <div className="form-group">
-                    <label htmlFor="medications">Current Medications</label>
-                    <input
-                      type="text"
-                      id="medications"
-                      name="medications"
-                      value={newChildData.medications}
-                      onChange={handleNewChildChange}
-                      placeholder="e.g., Inhaler, Insulin, None (separated by commas)"
-                    />
-                  </div>
-                  
-                  <div className="form-group">
-                    <label htmlFor="dietaryRestrictions">Dietary Restrictions</label>
-                    <input
-                      type="text"
-                      id="dietaryRestrictions"
-                      name="dietaryRestrictions"
-                      value={newChildData.dietaryRestrictions}
-                      onChange={handleNewChildChange}
-                      placeholder="e.g., Vegetarian, Gluten-free, None"
-                    />
-                  </div>
-                </div>
-                
-                <div className="form-row">
-                  <div className="form-group">
-                    <label htmlFor="doctorName">Doctor's Name</label>
-                    <input
-                      type="text"
-                      id="doctorName"
-                      name="doctorName"
-                      value={newChildData.doctorName}
-                      onChange={handleNewChildChange}
-                      placeholder="Dr. Smith"
-                    />
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="form-control">
+                      <label className="label">
+                        <span className="label-text">Current Medications</span>
+                      </label>
+                      <input
+                        type="text"
+                        className="input input-bordered"
+                        name="medications"
+                        value={newChildData.medications}
+                        onChange={handleNewChildChange}
+                        placeholder="e.g., Inhaler, Insulin, None (separated by commas)"
+                      />
+                    </div>
+                    
+                    <div className="form-control">
+                      <label className="label">
+                        <span className="label-text">Dietary Restrictions</span>
+                      </label>
+                      <input
+                        type="text"
+                        className="input input-bordered"
+                        name="dietaryRestrictions"
+                        value={newChildData.dietaryRestrictions}
+                        onChange={handleNewChildChange}
+                        placeholder="e.g., Vegetarian, Gluten-free, None"
+                      />
+                    </div>
                   </div>
                   
-                  <div className="form-group">
-                    <label htmlFor="doctorPhone">Doctor's Phone</label>
-                    <input
-                      type="tel"
-                      id="doctorPhone"
-                      name="doctorPhone"
-                      value={newChildData.doctorPhone}
-                      onChange={handleNewChildChange}
-                      placeholder="(555) 123-4567"
-                    />
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="form-control">
+                      <label className="label">
+                        <span className="label-text">Doctor's Name</span>
+                      </label>
+                      <input
+                        type="text"
+                        className="input input-bordered"
+                        name="doctorName"
+                        value={newChildData.doctorName}
+                        onChange={handleNewChildChange}
+                        placeholder="Dr. Smith"
+                      />
+                    </div>
+                    
+                    <div className="form-control">
+                      <label className="label">
+                        <span className="label-text">Doctor's Phone</span>
+                      </label>
+                      <input
+                        type="tel"
+                        className="input input-bordered"
+                        name="doctorPhone"
+                        value={newChildData.doctorPhone}
+                        onChange={handleNewChildChange}
+                        placeholder="(555) 123-4567"
+                      />
+                    </div>
                   </div>
                 </div>
               </div>
 
               {/* Emergency Contact Section */}
-              <div className="form-section">
-                <h3>🚨 Emergency Contact</h3>
-                
-                <div className="form-row">
-                  <div className="form-group">
-                    <label htmlFor="emergencyContact">Emergency Contact Name</label>
-                    <input
-                      type="text"
-                      id="emergencyContact"
-                      name="emergencyContact"
-                      value={newChildData.emergencyContact}
-                      onChange={handleNewChildChange}
-                      placeholder="Full name of emergency contact"
-                    />
-                  </div>
+              <div className="card bg-base-100">
+                <div className="card-body">
+                  <h4 className="card-title text-base">🚨 Emergency Contact</h4>
                   
-                  <div className="form-group">
-                    <label htmlFor="emergencyRelationship">Relationship</label>
-                    <input
-                      type="text"
-                      id="emergencyRelationship"
-                      name="emergencyRelationship"
-                      value={newChildData.emergencyRelationship}
-                      onChange={handleNewChildChange}
-                      placeholder="e.g., Grandmother, Uncle, Family Friend"
-                    />
-                  </div>
-                  
-                  <div className="form-group">
-                    <label htmlFor="emergencyPhone">Emergency Phone</label>
-                    <input
-                      type="tel"
-                      id="emergencyPhone"
-                      name="emergencyPhone"
-                      value={newChildData.emergencyPhone}
-                      onChange={handleNewChildChange}
-                      placeholder="(555) 123-4567"
-                    />
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div className="form-control">
+                      <label className="label">
+                        <span className="label-text">Emergency Contact Name</span>
+                      </label>
+                      <input
+                        type="text"
+                        className="input input-bordered"
+                        name="emergencyContact"
+                        value={newChildData.emergencyContact}
+                        onChange={handleNewChildChange}
+                        placeholder="Full name of emergency contact"
+                      />
+                    </div>
+                    
+                    <div className="form-control">
+                      <label className="label">
+                        <span className="label-text">Relationship</span>
+                      </label>
+                      <input
+                        type="text"
+                        className="input input-bordered"
+                        name="emergencyRelationship"
+                        value={newChildData.emergencyRelationship}
+                        onChange={handleNewChildChange}
+                        placeholder="e.g., Grandmother, Uncle"
+                      />
+                    </div>
+                    
+                    <div className="form-control">
+                      <label className="label">
+                        <span className="label-text">Emergency Phone</span>
+                      </label>
+                      <input
+                        type="tel"
+                        className="input input-bordered"
+                        name="emergencyPhone"
+                        value={newChildData.emergencyPhone}
+                        onChange={handleNewChildChange}
+                        placeholder="(555) 123-4567"
+                      />
+                    </div>
                   </div>
                 </div>
               </div>
 
               {/* Additional Information Section */}
-              <div className="form-section">
-                <h3>📝 Additional Information</h3>
-                
-                <div className="form-group">
-                  <label htmlFor="specialNeeds">Special Needs or Accommodations</label>
-                  <textarea
-                    id="specialNeeds"
-                    name="specialNeeds"
-                    value={newChildData.specialNeeds}
-                    onChange={handleNewChildChange}
-                    rows="3"
-                    placeholder="Any special needs, accommodations, or important information about the child..."
-                  />
-                </div>
-                
-                <div className="form-group">
-                  <label htmlFor="notes">Additional Notes</label>
-                  <textarea
-                    id="notes"
-                    name="notes"
-                    value={newChildData.notes}
-                    onChange={handleNewChildChange}
-                    rows="3"
-                    placeholder="Any other important information, preferences, or notes about the child..."
-                  />
+              <div className="card bg-base-100">
+                <div className="card-body">
+                  <h4 className="card-title text-base">📝 Additional Information</h4>
+                  
+                  <div className="form-control">
+                    <label className="label">
+                      <span className="label-text">Special Needs or Accommodations</span>
+                    </label>
+                    <textarea
+                      className="textarea textarea-bordered h-24"
+                      name="specialNeeds"
+                      value={newChildData.specialNeeds}
+                      onChange={handleNewChildChange}
+                      placeholder="Any special needs, accommodations, or important information about the child..."
+                    />
+                  </div>
+                  
+                  {/* <div className="form-control">
+                    <label className="label">
+                      <span className="label-text">Additional Notes</span>
+                    </label>
+                    <textarea
+                      className="textarea textarea-bordered h-24"
+                      name="notes"
+                      value={newChildData.notes}
+                      onChange={handleNewChildChange}
+                      placeholder="Any other important information, preferences, or notes about the child..."
+                    />
+                  </div> */}
                 </div>
               </div>
               
-              <div className="form-actions">
+              <div className="modal-action">
                 <button 
                   type="submit" 
-                  className="submit-btn"
+                  className="btn btn-primary"
                   disabled={loading}
                 >
-                  {loading ? '⏳ Adding Child...' : '✅ Add Child & Generate Access Code'}
+                  {loading ? (
+                    <span className="loading loading-spinner loading-sm"></span>
+                  ) : (
+                    'Add Child & Generate Access Code'
+                  )}
                 </button>
                 <button 
                   type="button" 
-                  className="cancel-btn"
+                  className="btn"
                   onClick={() => setShowAddChildModal(false)}
                   disabled={loading}
                 >

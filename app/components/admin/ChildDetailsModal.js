@@ -707,380 +707,375 @@ const AttendanceTab = ({ attendance, onMarkAttendance, loading }) => {
           </div>
           <button type="submit" disabled={loading}>
             {loading ? 'Updating...' : 'Update Attendance'}
-            <button type="submit" disabled={loading}>
-                {loading ? 'Updating...' : 'Update Attendance'}
-            
-            </button>
-            </button>
-        
-
+          </button>
         </form>
-        </div>
+      </div>
 
-        <div className="attendance-history">
-            <h4>Attendance History</h4>
-            {attendance.length === 0 ? (
-            <div className="no-data">No attendance records yet.</div>
-            ) : (
-            <div className="attendance-list">
-                {attendance.map(record => (
-                <div key={record.id} className="attendance-record">
-                    <div className="record-date">
-                    {new Date(record.date).toLocaleDateString()}
-                    </div>
-                    <div className="record-details">
-                    <span className={`status-badge ${record.status}`}>
-                        {record.status}
-                    </span>
-                    {record.arrivalTime && (
-                        <span className="time-info">
-                        Arrived: {record.arrivalTime}
-                        </span>
-                    )}
-                    {record.departureTime && (
-                        <span className="time-info">
-                        Departed: {record.departureTime}
-                        </span>
-                    )}
-                    </div>
-                    {record.notes && (
-                    <div className="record-notes">
-                        Notes: {record.notes}
-                    </div>
-                    )}
+      <div className="attendance-history">
+        <h4>Attendance History</h4>
+        {attendance.length === 0 ? (
+          <div className="no-data">No attendance records yet.</div>
+        ) : (
+          <div className="attendance-list">
+            {attendance.map(record => (
+              <div key={record.id} className="attendance-record">
+                <div className="record-date">
+                  {new Date(record.date).toLocaleDateString()}
                 </div>
+                <div className="record-details">
+                  <span className={`status-badge ${record.status}`}>
+                    {record.status}
+                  </span>
+                  {record.arrivalTime && (
+                    <span className="time-info">
+                      Arrived: {record.arrivalTime}
+                    </span>
+                  )}
+                  {record.departureTime && (
+                    <span className="time-info">
+                      Departed: {record.departureTime}
+                    </span>
+                  )}
+                </div>
+                {record.notes && (
+                  <div className="record-notes">
+                    Notes: {record.notes}
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
+
+// Meals Tab Component
+const MealsTab = ({ meals, onRecordMeal, loading }) => {
+  const [showAddForm, setShowAddForm] = useState(false);
+  const [newMeal, setNewMeal] = useState({
+    mealType: 'breakfast',
+    foodItems: '',
+    amountEaten: 'all',
+    notes: '',
+    date: new Date().toISOString().split('T')[0],
+    time: new Date().toTimeString().slice(0, 5)
+  });
+
+  const mealTypes = ['breakfast', 'lunch', 'dinner', 'snack'];
+  const amountOptions = ['all', 'most', 'some', 'little', 'none'];
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    await onRecordMeal({
+      ...newMeal,
+      foodItems: newMeal.foodItems.split(',').map(item => item.trim()).filter(item => item)
+    });
+    setNewMeal({
+      mealType: 'breakfast',
+      foodItems: '',
+      amountEaten: 'all',
+      notes: '',
+      date: new Date().toISOString().split('T')[0],
+      time: new Date().toTimeString().slice(0, 5)
+    });
+    setShowAddForm(false);
+  };
+
+  return (
+    <div className="meals-tab">
+      <div className="tab-header">
+        <h3>Meal Tracking</h3>
+        <button 
+          className="add-btn"
+          onClick={() => setShowAddForm(!showAddForm)}
+        >
+          {showAddForm ? 'Cancel' : 'Record Meal'}
+        </button>
+      </div>
+
+      {showAddForm && (
+        <div className="add-form">
+          <form onSubmit={handleSubmit}>
+            <div className="form-row">
+              <div className="form-group">
+                <label>Meal Type</label>
+                <select
+                  value={newMeal.mealType}
+                  onChange={(e) => setNewMeal({...newMeal, mealType: e.target.value})}
+                  required
+                >
+                  {mealTypes.map(type => (
+                    <option key={type} value={type}>
+                      {type.charAt(0).toUpperCase() + type.slice(1)}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div className="form-group">
+                <label>Date</label>
+                <input
+                  type="date"
+                  value={newMeal.date}
+                  onChange={(e) => setNewMeal({...newMeal, date: e.target.value})}
+                  required
+                />
+              </div>
+              <div className="form-group">
+                <label>Time</label>
+                <input
+                  type="time"
+                  value={newMeal.time}
+                  onChange={(e) => setNewMeal({...newMeal, time: e.target.value})}
+                  required
+                />
+              </div>
+            </div>
+            <div className="form-group">
+              <label>Food Items (comma separated)</label>
+              <textarea
+                value={newMeal.foodItems}
+                onChange={(e) => setNewMeal({...newMeal, foodItems: e.target.value})}
+                placeholder="e.g., Chicken nuggets, Apple slices, Milk"
+                required
+              />
+            </div>
+            <div className="form-group">
+              <label>Amount Eaten</label>
+              <select
+                value={newMeal.amountEaten}
+                onChange={(e) => setNewMeal({...newMeal, amountEaten: e.target.value})}
+                required
+              >
+                {amountOptions.map(amount => (
+                  <option key={amount} value={amount}>
+                    {amount.charAt(0).toUpperCase() + amount.slice(1)}
+                  </option>
                 ))}
+              </select>
             </div>
-            )}
-        </div>
-        </div>
-    );
-    };
-
-    // Meals Tab Component
-    const MealsTab = ({ meals, onRecordMeal, loading }) => {
-    const [showAddForm, setShowAddForm] = useState(false);
-    const [newMeal, setNewMeal] = useState({
-        mealType: 'breakfast',
-        foodItems: '',
-        amountEaten: 'all',
-        notes: '',
-        date: new Date().toISOString().split('T')[0],
-        time: new Date().toTimeString().slice(0, 5)
-    });
-
-    const mealTypes = ['breakfast', 'lunch', 'dinner', 'snack'];
-    const amountOptions = ['all', 'most', 'some', 'little', 'none'];
-
-    const handleSubmit = async (e) => {
-        e.preventDefault();
-        await onRecordMeal({
-        ...newMeal,
-        foodItems: newMeal.foodItems.split(',').map(item => item.trim()).filter(item => item)
-        });
-        setNewMeal({
-        mealType: 'breakfast',
-        foodItems: '',
-        amountEaten: 'all',
-        notes: '',
-        date: new Date().toISOString().split('T')[0],
-        time: new Date().toTimeString().slice(0, 5)
-        });
-        setShowAddForm(false);
-    };
-
-    return (
-        <div className="meals-tab">
-        <div className="tab-header">
-            <h3>Meal Tracking</h3>
-            <button 
-            className="add-btn"
-            onClick={() => setShowAddForm(!showAddForm)}
-            >
-            {showAddForm ? 'Cancel' : 'Record Meal'}
+            <div className="form-group">
+              <label>Notes</label>
+              <textarea
+                value={newMeal.notes}
+                onChange={(e) => setNewMeal({...newMeal, notes: e.target.value})}
+                placeholder="Any observations or notes..."
+              />
+            </div>
+            <button type="submit" disabled={loading}>
+              {loading ? 'Recording...' : 'Record Meal'}
             </button>
+          </form>
         </div>
+      )}
 
-        {showAddForm && (
-            <div className="add-form">
-            <form onSubmit={handleSubmit}>
-                <div className="form-row">
-                <div className="form-group">
-                    <label>Meal Type</label>
-                    <select
-                    value={newMeal.mealType}
-                    onChange={(e) => setNewMeal({...newMeal, mealType: e.target.value})}
-                    required
-                    >
-                    {mealTypes.map(type => (
-                        <option key={type} value={type}>
-                        {type.charAt(0).toUpperCase() + type.slice(1)}
-                        </option>
-                    ))}
-                    </select>
+      <div className="meals-list">
+        {meals.length === 0 ? (
+          <div className="no-data">No meal records yet.</div>
+        ) : (
+          meals.map(meal => (
+            <div key={meal.id} className="meal-card">
+              <div className="meal-header">
+                <span className={`meal-type ${meal.mealType}`}>
+                  {meal.mealType.charAt(0).toUpperCase() + meal.mealType.slice(1)}
+                </span>
+                <span className="meal-datetime">
+                  {new Date(meal.date).toLocaleDateString()} at {meal.time}
+                </span>
+              </div>
+              <div className="meal-content">
+                <div className="food-items">
+                  <strong>Food Items:</strong>
+                  <ul>
+                    {Array.isArray(meal.foodItems) ? 
+                      meal.foodItems.map((item, index) => (
+                        <li key={index}>{item}</li>
+                      )) : 
+                      <li>{meal.foodItems}</li>
+                    }
+                  </ul>
                 </div>
-                <div className="form-group">
-                    <label>Date</label>
-                    <input
-                    type="date"
-                    value={newMeal.date}
-                    onChange={(e) => setNewMeal({...newMeal, date: e.target.value})}
-                    required
-                    />
+                <div className="amount-eaten">
+                  <strong>Amount Eaten:</strong> 
+                  <span className={`amount ${meal.amountEaten}`}>
+                    {meal.amountEaten.charAt(0).toUpperCase() + meal.amountEaten.slice(1)}
+                  </span>
                 </div>
-                <div className="form-group">
-                    <label>Time</label>
-                    <input
-                    type="time"
-                    value={newMeal.time}
-                    onChange={(e) => setNewMeal({...newMeal, time: e.target.value})}
-                    required
-                    />
-                </div>
-                </div>
-                <div className="form-group">
-                <label>Food Items (comma separated)</label>
-                <textarea
-                    value={newMeal.foodItems}
-                    onChange={(e) => setNewMeal({...newMeal, foodItems: e.target.value})}
-                    placeholder="e.g., Chicken nuggets, Apple slices, Milk"
-                    required
-                />
-                </div>
-                <div className="form-group">
-                <label>Amount Eaten</label>
-                <select
-                    value={newMeal.amountEaten}
-                    onChange={(e) => setNewMeal({...newMeal, amountEaten: e.target.value})}
-                    required
-                >
-                    {amountOptions.map(amount => (
-                    <option key={amount} value={amount}>
-                        {amount.charAt(0).toUpperCase() + amount.slice(1)}
-                    </option>
-                    ))}
-                </select>
-                </div>
-                <div className="form-group">
-                <label>Notes</label>
-                <textarea
-                    value={newMeal.notes}
-                    onChange={(e) => setNewMeal({...newMeal, notes: e.target.value})}
-                    placeholder="Any observations or notes..."
-                />
-                </div>
-                <button type="submit" disabled={loading}>
-                {loading ? 'Recording...' : 'Record Meal'}
-                </button>
-            </form>
+                {meal.notes && (
+                  <div className="meal-notes">
+                    <strong>Notes:</strong> {meal.notes}
+                  </div>
+                )}
+              </div>
             </div>
+          ))
         )}
+      </div>
+    </div>
+  );
+};
 
-        <div className="meals-list">
-            {meals.length === 0 ? (
-            <div className="no-data">No meal records yet.</div>
-            ) : (
-            meals.map(meal => (
-                <div key={meal.id} className="meal-card">
-                <div className="meal-header">
-                    <span className={`meal-type ${meal.mealType}`}>
-                    {meal.mealType.charAt(0).toUpperCase() + meal.mealType.slice(1)}
-                    </span>
-                    <span className="meal-datetime">
-                    {new Date(meal.date).toLocaleDateString()} at {meal.time}
-                    </span>
-                </div>
-                <div className="meal-content">
-                    <div className="food-items">
-                    <strong>Food Items:</strong>
-                    <ul>
-                        {Array.isArray(meal.foodItems) ? 
-                        meal.foodItems.map((item, index) => (
-                            <li key={index}>{item}</li>
-                        )) : 
-                        <li>{meal.foodItems}</li>
-                        }
-                    </ul>
-                    </div>
-                    <div className="amount-eaten">
-                    <strong>Amount Eaten:</strong> 
-                    <span className={`amount ${meal.amountEaten}`}>
-                        {meal.amountEaten.charAt(0).toUpperCase() + meal.amountEaten.slice(1)}
-                    </span>
-                    </div>
-                    {meal.notes && (
-                    <div className="meal-notes">
-                        <strong>Notes:</strong> {meal.notes}
-                    </div>
-                    )}
-                </div>
-                </div>
-            ))
-            )}
-        </div>
-        </div>
-    );
-    };
+// Naps Tab Component
+const NapsTab = ({ naps, onRecordNap, loading }) => {
+  const [showAddForm, setShowAddForm] = useState(false);
+  const [newNap, setNewNap] = useState({
+    startTime: '',
+    endTime: '',
+    quality: 'good',
+    notes: '',
+    date: new Date().toISOString().split('T')[0]
+  });
 
-    // Naps Tab Component
-    const NapsTab = ({ naps, onRecordNap, loading }) => {
-    const [showAddForm, setShowAddForm] = useState(false);
-    const [newNap, setNewNap] = useState({
-        startTime: '',
-        endTime: '',
-        quality: 'good',
-        notes: '',
-        date: new Date().toISOString().split('T')[0]
+  const qualityOptions = ['excellent', 'good', 'fair', 'poor', 'restless'];
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    
+    // Calculate duration
+    const start = new Date(`${newNap.date}T${newNap.startTime}`);
+    const end = new Date(`${newNap.date}T${newNap.endTime}`);
+    const durationMinutes = Math.round((end - start) / (1000 * 60));
+    
+    await onRecordNap({
+      ...newNap,
+      duration: durationMinutes
     });
+    
+    setNewNap({
+      startTime: '',
+      endTime: '',
+      quality: 'good',
+      notes: '',
+      date: new Date().toISOString().split('T')[0]
+    });
+    setShowAddForm(false);
+  };
 
-    const qualityOptions = ['excellent', 'good', 'fair', 'poor', 'restless'];
+  const formatDuration = (minutes) => {
+    if (!minutes || minutes <= 0) return 'N/A';
+    
+    const hours = Math.floor(minutes / 60);
+    const mins = minutes % 60;
+    
+    if (hours > 0) {
+      return `${hours}h ${mins}m`;
+    } else {
+      return `${mins}m`;
+    }
+  };
 
-    const handleSubmit = async (e) => {
-        e.preventDefault();
-        
-        // Calculate duration
-        const start = new Date(`${newNap.date}T${newNap.startTime}`);
-        const end = new Date(`${newNap.date}T${newNap.endTime}`);
-        const durationMinutes = Math.round((end - start) / (1000 * 60));
-        
-        await onRecordNap({
-        ...newNap,
-        duration: durationMinutes
-        });
-        
-        setNewNap({
-        startTime: '',
-        endTime: '',
-        quality: 'good',
-        notes: '',
-        date: new Date().toISOString().split('T')[0]
-        });
-        setShowAddForm(false);
-    };
+  return (
+    <div className="naps-tab">
+      <div className="tab-header">
+        <h3>Nap Tracking</h3>
+        <button 
+          className="add-btn"
+          onClick={() => setShowAddForm(!showAddForm)}
+        >
+          {showAddForm ? 'Cancel' : 'Record Nap'}
+        </button>
+      </div>
 
-    const formatDuration = (minutes) => {
-        if (!minutes || minutes <= 0) return 'N/A';
-        
-        const hours = Math.floor(minutes / 60);
-        const mins = minutes % 60;
-        
-        if (hours > 0) {
-        return `${hours}h ${mins}m`;
-        } else {
-        return `${mins}m`;
-        }
-    };
-
-    return (
-        <div className="naps-tab">
-        <div className="tab-header">
-            <h3>Nap Tracking</h3>
-            <button 
-            className="add-btn"
-            onClick={() => setShowAddForm(!showAddForm)}
-            >
-            {showAddForm ? 'Cancel' : 'Record Nap'}
-            </button>
-        </div>
-
-        {showAddForm && (
-            <div className="add-form">
-            <form onSubmit={handleSubmit}>
-                <div className="form-row">
-                <div className="form-group">
-                    <label>Date</label>
-                    <input
-                    type="date"
-                    value={newNap.date}
-                    onChange={(e) => setNewNap({...newNap, date: e.target.value})}
-                    required
-                    />
-                </div>
-                <div className="form-group">
-                    <label>Start Time</label>
-                    <input
-                    type="time"
-                    value={newNap.startTime}
-                    onChange={(e) => setNewNap({...newNap, startTime: e.target.value})}
-                    required
-                    />
-                </div>
-                <div className="form-group">
-                    <label>End Time</label>
-                    <input
-                    type="time"
-                    value={newNap.endTime}
-                    onChange={(e) => setNewNap({...newNap, endTime: e.target.value})}
-                    required
-                    />
-                </div>
-                </div>
-                <div className="form-group">
-                <label>Sleep Quality</label>
-                <select
-                    value={newNap.quality}
-                    onChange={(e) => setNewNap({...newNap, quality: e.target.value})}
-                    required
-                >
-                    {qualityOptions.map(quality => (
-                    <option key={quality} value={quality}>
-                        {quality.charAt(0).toUpperCase() + quality.slice(1)}
-                    </option>
-                    ))}
-                </select>
-                </div>
-                <div className="form-group">
-                <label>Notes</label>
-                <textarea
-                    value={newNap.notes}
-                    onChange={(e) => setNewNap({...newNap, notes: e.target.value})}
-                    placeholder="How did the child sleep? Any observations..."
+      {showAddForm && (
+        <div className="add-form">
+          <form onSubmit={handleSubmit}>
+            <div className="form-row">
+              <div className="form-group">
+                <label>Date</label>
+                <input
+                  type="date"
+                  value={newNap.date}
+                  onChange={(e) => setNewNap({...newNap, date: e.target.value})}
+                  required
                 />
-                </div>
-                <button type="submit" disabled={loading}>
-                {loading ? 'Recording...' : 'Record Nap'}
-                </button>
-            </form>
+              </div>
+              <div className="form-group">
+                <label>Start Time</label>
+                <input
+                  type="time"
+                  value={newNap.startTime}
+                  onChange={(e) => setNewNap({...newNap, startTime: e.target.value})}
+                  required
+                />
+              </div>
+              <div className="form-group">
+                <label>End Time</label>
+                <input
+                  type="time"
+                  value={newNap.endTime}
+                  onChange={(e) => setNewNap({...newNap, endTime: e.target.value})}
+                  required
+                />
+              </div>
             </div>
-        )}
+            <div className="form-group">
+              <label>Sleep Quality</label>
+              <select
+                value={newNap.quality}
+                onChange={(e) => setNewNap({...newNap, quality: e.target.value})}
+                required
+              >
+                {qualityOptions.map(quality => (
+                  <option key={quality} value={quality}>
+                    {quality.charAt(0).toUpperCase() + quality.slice(1)}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div className="form-group">
+              <label>Notes</label>
+              <textarea
+                value={newNap.notes}
+                onChange={(e) => setNewNap({...newNap, notes: e.target.value})}
+                placeholder="How did the child sleep? Any observations..."
+              />
+            </div>
+            <button type="submit" disabled={loading}>
+              {loading ? 'Recording...' : 'Record Nap'}
+            </button>
+          </form>
+        </div>
+      )}
 
-        <div className="naps-list">
-            {naps.length === 0 ? (
-            <div className="no-data">No nap records yet.</div>
-            ) : (
-            naps.map(nap => (
-                <div key={nap.id} className="nap-card">
-                <div className="nap-header">
-                    <span className="nap-date">
-                    {new Date(nap.date).toLocaleDateString()}
-                    </span>
-                    <span className={`nap-quality ${nap.quality}`}>
-                    {nap.quality.charAt(0).toUpperCase() + nap.quality.slice(1)} Sleep
-                    </span>
+      <div className="naps-list">
+        {naps.length === 0 ? (
+          <div className="no-data">No nap records yet.</div>
+        ) : (
+          naps.map(nap => (
+            <div key={nap.id} className="nap-card">
+              <div className="nap-header">
+                <span className="nap-date">
+                  {new Date(nap.date).toLocaleDateString()}
+                </span>
+                <span className={`nap-quality ${nap.quality}`}>
+                  {nap.quality.charAt(0).toUpperCase() + nap.quality.slice(1)} Sleep
+                </span>
+              </div>
+              <div className="nap-content">
+                <div className="nap-time-info">
+                  <div className="time-detail">
+                    <strong>Start:</strong> {nap.startTime}
+                  </div>
+                  <div className="time-detail">
+                    <strong>End:</strong> {nap.endTime}
+                  </div>
+                  <div className="time-detail">
+                    <strong>Duration:</strong> {formatDuration(nap.duration)}
+                  </div>
                 </div>
-                <div className="nap-content">
-                    <div className="nap-time-info">
-                    <div className="time-detail">
-                        <strong>Start:</strong> {nap.startTime}
-                    </div>
-                    <div className="time-detail">
-                        <strong>End:</strong> {nap.endTime}
-                    </div>
-                    <div className="time-detail">
-                        <strong>Duration:</strong> {formatDuration(nap.duration)}
-                    </div>
-                    </div>
-                    {nap.notes && (
-                    <div className="nap-notes">
-                        <strong>Notes:</strong> {nap.notes}
-                    </div>
-                    )}
-                </div>
-                </div>
-            ))
-            )}
-        </div>
-        </div>
-    );
-    };
+                {nap.notes && (
+                  <div className="nap-notes">
+                    <strong>Notes:</strong> {nap.notes}
+                  </div>
+                )}
+              </div>
+            </div>
+          ))
+        )}
+      </div>
+    </div>
+  );
+};
+
 export default ChildDetailsModal;

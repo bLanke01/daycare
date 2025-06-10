@@ -301,38 +301,38 @@ export default function NapTrackingPage() {
 
   if (loading) {
     return (
-      <div className="nap-tracking-container">
-        <div className="loading">Loading nap tracking system...</div>
+      <div className="min-h-screen flex justify-center items-center">
+        <span className="loading loading-spinner loading-lg"></span>
       </div>
     );
   }
 
   return (
-    <div className="nap-tracking-container">
-      <div className="page-header">
-        <h1>😴 Nap Tracking & Sleep Management</h1>
-        <div className="header-actions">
+    <div className="min-h-screen p-4 space-y-6">
+      <div className="flex flex-col sm:flex-row justify-between items-center mb-6">
+        <h1 className="text-3xl font-bold">😴 Nap Tracking & Sleep Management</h1>
+        <div className="flex items-center gap-4">
           <input
             type="date"
+            className="input input-bordered"
             value={selectedDate}
             onChange={(e) => setSelectedDate(e.target.value)}
-            className="date-input"
           />
-          <div className="view-tabs">
+          <div className="tabs tabs-boxed">
             <button 
-              className={`tab-btn ${activeView === 'live' ? 'active' : ''}`}
+              className={`tab ${activeView === 'live' ? 'tab-active' : ''}`}
               onClick={() => setActiveView('live')}
             >
               🔴 Live Tracking
             </button>
             <button 
-              className={`tab-btn ${activeView === 'schedule' ? 'active' : ''}`}
+              className={`tab ${activeView === 'schedule' ? 'tab-active' : ''}`}
               onClick={() => setActiveView('schedule')}
             >
               📅 Nap Schedule
             </button>
             <button 
-              className={`tab-btn ${activeView === 'history' ? 'active' : ''}`}
+              className={`tab ${activeView === 'history' ? 'tab-active' : ''}`}
               onClick={() => setActiveView('history')}
             >
               📊 Sleep History
@@ -342,20 +342,11 @@ export default function NapTrackingPage() {
       </div>
 
       {error && (
-        <div className="error-message">
+        <div className="alert alert-error">
           {error}
           <button 
-            className="retry-btn"
+            className="btn btn-error btn-sm"
             onClick={() => window.location.reload()}
-            style={{
-              marginLeft: '1rem',
-              padding: '0.25rem 0.5rem',
-              background: '#dc3545',
-              color: 'white',
-              border: 'none',
-              borderRadius: '4px',
-              cursor: 'pointer'
-            }}
           >
             Retry
           </button>
@@ -364,107 +355,111 @@ export default function NapTrackingPage() {
 
       {/* Live Tracking View */}
       {activeView === 'live' && (
-        <div className="live-tracking-view">
-          <div className="tracking-stats">
-            <div className="stat-card">
-              <span className="stat-number">{activeNaps.size}</span>
-              <span className="stat-label">Currently Sleeping</span>
+        <div className="space-y-6">
+          <div className="stats shadow">
+            <div className="stat">
+              <div className="stat-title">Currently Sleeping</div>
+              <div className="stat-value">{activeNaps.size}</div>
             </div>
-            <div className="stat-card">
-              <span className="stat-number">{children.length - activeNaps.size}</span>
-              <span className="stat-label">Awake</span>
+            <div className="stat">
+              <div className="stat-title">Awake</div>
+              <div className="stat-value">{children.length - activeNaps.size}</div>
             </div>
-            <div className="stat-card">
-              <span className="stat-number">
+            <div className="stat">
+              <div className="stat-title">Naps Today</div>
+              <div className="stat-value">
                 {napHistory.filter(nap => 
                   nap.date.includes(new Date().toISOString().split('T')[0])
                 ).length}
-              </span>
-              <span className="stat-label">Naps Completed Today</span>
+              </div>
             </div>
           </div>
 
           {children.length === 0 ? (
-            <div className="no-children">
-              <p>No children found. Please add children to the system first.</p>
+            <div className="card bg-base-200 p-8 text-center">
+              <p className="text-lg">No children found. Please add children to the system first.</p>
             </div>
           ) : (
             Object.entries(groupedChildren).map(([group, groupChildren]) => (
-              <div key={group} className="group-section">
-                <h2>👶 {group} Room</h2>
-                <div className="children-nap-grid">
-                  {groupChildren.map(child => {
-                    const napStatus = getNapStatus(child);
-                    const activeNap = activeNaps.get(child.id) || napSessions[child.id];
-                    const napDuration = napTimers.get(child.id) || 0;
-                    const todayTotal = getTodayNapTime(child.id);
-                    
-                    return (
-                      <div key={child.id} className={`child-nap-card ${napStatus}`}>
-                        <div className="child-header">
-                          <div className="child-avatar">
-                            {child.gender === 'Female' ? '👧' : '👦'}
-                          </div>
-                          <div className="child-info">
-                            <h3>{child.firstName} {child.lastName}</h3>
-                            <p className="nap-status">
-                              {napStatus === 'sleeping' ? '😴 Sleeping' : '😊 Awake'}
-                            </p>
-                          </div>
-                          <div className="status-indicator">
-                            <div className={`status-dot ${napStatus}`}></div>
-                          </div>
-                        </div>
-                        
-                        <div className="nap-info">
-                          {napStatus === 'sleeping' && activeNap ? (
-                            <div className="active-nap-info">
-                              <p className="nap-timer">
-                                <strong>Sleeping for:</strong> {formatDuration(napDuration)}
-                              </p>
-                              <p className="start-time">
-                                <strong>Started:</strong> {new Date(activeNap.startTime).toLocaleTimeString()}
-                              </p>
-                              <div className="nap-actions">
-                                <button 
-                                  className="wake-btn"
-                                  onClick={() => wakeChild(child, 'manual')}
-                                >
-                                  👋 Wake Up
-                                </button>
-                                <button 
-                                  className="end-nap-btn"
-                                  onClick={() => endNap(child, 'good')}
-                                >
-                                  ✅ End Nap
-                                </button>
+              <div key={group} className="card bg-base-100 shadow-xl">
+                <div className="card-body">
+                  <h2 className="card-title">👶 {group} Room</h2>
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {groupChildren.map(child => {
+                      const napStatus = getNapStatus(child);
+                      const activeNap = activeNaps.get(child.id) || napSessions[child.id];
+                      const napDuration = napTimers.get(child.id) || 0;
+                      const todayTotal = getTodayNapTime(child.id);
+                      
+                      return (
+                        <div key={child.id} className={`card bg-base-200 ${napStatus === 'sleeping' ? 'border-primary border-2' : ''}`}>
+                          <div className="card-body">
+                            <div className="flex items-center gap-4">
+                              <div className="text-2xl">
+                                {child.gender === 'Female' ? '👧' : '👦'}
+                              </div>
+                              <div>
+                                <h3 className="font-bold">{child.firstName} {child.lastName}</h3>
+                                <p className={`text-sm ${napStatus === 'sleeping' ? 'text-primary' : ''}`}>
+                                  {napStatus === 'sleeping' ? '😴 Sleeping' : '😊 Awake'}
+                                </p>
+                              </div>
+                              <div className={`badge badge-${napStatus === 'sleeping' ? 'primary' : 'ghost'} ml-auto`}>
+                                {napStatus}
                               </div>
                             </div>
-                          ) : (
-                            <div className="awake-info">
-                              <p className="total-sleep">
-                                <strong>Today's Sleep:</strong> {todayTotal}
-                              </p>
-                              <div className="nap-actions">
-                                <button 
-                                  className="start-nap-btn"
-                                  onClick={() => startNap(child, 'regular')}
-                                >
-                                  😴 Start Nap
-                                </button>
-                                <button 
-                                  className="quiet-time-btn"
-                                  onClick={() => startNap(child, 'quiet-time')}
-                                >
-                                  🤫 Quiet Time
-                                </button>
+                            
+                            <div className="divider"></div>
+                            
+                            {napStatus === 'sleeping' && activeNap ? (
+                              <div className="space-y-2">
+                                <p>
+                                  <strong>Sleeping for:</strong> {formatDuration(napDuration)}
+                                </p>
+                                <p>
+                                  <strong>Started:</strong> {new Date(activeNap.startTime).toLocaleTimeString()}
+                                </p>
+                                <div className="card-actions justify-end">
+                                  <button 
+                                    className="btn btn-warning btn-sm"
+                                    onClick={() => wakeChild(child, 'manual')}
+                                  >
+                                    👋 Wake Up
+                                  </button>
+                                  <button 
+                                    className="btn btn-primary btn-sm"
+                                    onClick={() => endNap(child, 'good')}
+                                  >
+                                    ✅ End Nap
+                                  </button>
+                                </div>
                               </div>
-                            </div>
-                          )}
+                            ) : (
+                              <div className="space-y-2">
+                                <p>
+                                  <strong>Today's Sleep:</strong> {todayTotal}
+                                </p>
+                                <div className="card-actions justify-end">
+                                  <button 
+                                    className="btn btn-primary btn-sm"
+                                    onClick={() => startNap(child, 'regular')}
+                                  >
+                                    😴 Start Nap
+                                  </button>
+                                  <button 
+                                    className="btn btn-ghost btn-sm"
+                                    onClick={() => startNap(child, 'quiet-time')}
+                                  >
+                                    🤫 Quiet Time
+                                  </button>
+                                </div>
+                              </div>
+                            )}
+                          </div>
                         </div>
-                      </div>
-                    );
-                  })}
+                      );
+                    })}
+                  </div>
                 </div>
               </div>
             ))
@@ -474,68 +469,75 @@ export default function NapTrackingPage() {
 
       {/* Schedule View */}
       {activeView === 'schedule' && (
-        <div className="schedule-view">
-          <div className="schedule-header">
-            <h2>📅 Daily Nap Schedule</h2>
-            <p>Recommended nap times by age group</p>
-          </div>
+        <div className="space-y-6">
+          <div className="card bg-base-100 shadow-xl">
+            <div className="card-body">
+              <h2 className="card-title">📅 Daily Nap Schedule</h2>
+              <p className="text-sm opacity-70">Recommended nap times by age group</p>
 
-          <div className="schedule-groups">
-            {Object.entries(napSchedules).map(([group, schedules]) => (
-              <div key={group} className="schedule-group">
-                <h3>👶 {group} Room</h3>
-                <div className="schedule-timeline">
-                  {schedules.map((schedule, index) => (
-                    <div key={index} className="schedule-item">
-                      <div className="schedule-time">
-                        <span className="start-time">{schedule.startTime}</span>
-                        <span className="time-separator">-</span>
-                        <span className="end-time">{schedule.endTime}</span>
+              <div className="space-y-8 mt-4">
+                {Object.entries(napSchedules).map(([group, schedules]) => (
+                  <div key={group} className="card bg-base-200">
+                    <div className="card-body">
+                      <h3 className="card-title">👶 {group} Room</h3>
+                      <div className="space-y-4">
+                        {schedules.map((schedule, index) => (
+                          <div key={index} className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 p-4 bg-base-100 rounded-lg">
+                            <div className="flex-1">
+                              <div className="font-bold">{schedule.name}</div>
+                              <div className="text-sm opacity-70">
+                                {schedule.startTime} - {schedule.endTime}
+                              </div>
+                            </div>
+                            <div className="badge badge-primary">
+                              Duration: {formatDuration(
+                                (new Date(`2024-01-01T${schedule.endTime}`) - 
+                                 new Date(`2024-01-01T${schedule.startTime}`)) / 1000 / 60
+                              )}
+                            </div>
+                          </div>
+                        ))}
                       </div>
-                      <div className="schedule-details">
-                        <h4>{schedule.name}</h4>
-                        <p className="duration">
-                          Duration: {formatDuration(
-                            (new Date(`2024-01-01T${schedule.endTime}`) - 
-                             new Date(`2024-01-01T${schedule.startTime}`)) / 1000 / 60
-                          )}
-                        </p>
+                      
+                      <div className="mt-4">
+                        <h4 className="font-bold mb-2">Children in this group:</h4>
+                        <div className="flex flex-wrap gap-2">
+                          {(groupedChildren[group] || []).map(child => (
+                            <span key={child.id} className="badge badge-ghost">
+                              {child.firstName}
+                            </span>
+                          ))}
+                        </div>
                       </div>
                     </div>
-                  ))}
-                </div>
-                
-                <div className="group-children">
-                  <h4>Children in this group:</h4>
-                  <div className="children-list">
-                    {(groupedChildren[group] || []).map(child => (
-                      <span key={child.id} className="child-tag">
-                        {child.firstName}
-                      </span>
-                    ))}
                   </div>
-                </div>
+                ))}
               </div>
-            ))}
+            </div>
           </div>
 
-          <div className="schedule-tips">
-            <h3>💡 Sleep Tips</h3>
-            <div className="tips-grid">
-              <div className="tip-card">
-                <h4>🌙 Environment</h4>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div className="card bg-base-100 shadow-xl">
+              <div className="card-body">
+                <h4 className="card-title">🌙 Environment</h4>
                 <p>Keep rooms dim, quiet, and at comfortable temperature (68-72°F)</p>
               </div>
-              <div className="tip-card">
-                <h4>⏰ Consistency</h4>
+            </div>
+            <div className="card bg-base-100 shadow-xl">
+              <div className="card-body">
+                <h4 className="card-title">⏰ Consistency</h4>
                 <p>Try to maintain consistent nap times to help establish sleep patterns</p>
               </div>
-              <div className="tip-card">
-                <h4>🎵 Calming</h4>
+            </div>
+            <div className="card bg-base-100 shadow-xl">
+              <div className="card-body">
+                <h4 className="card-title">🎵 Calming</h4>
                 <p>Soft music or white noise can help children fall asleep faster</p>
               </div>
-              <div className="tip-card">
-                <h4>👶 Individual Needs</h4>
+            </div>
+            <div className="card bg-base-100 shadow-xl">
+              <div className="card-body">
+                <h4 className="card-title">👶 Individual Needs</h4>
                 <p>Some children may need longer or shorter naps - adjust as needed</p>
               </div>
             </div>
@@ -545,108 +547,98 @@ export default function NapTrackingPage() {
 
       {/* History View */}
       {activeView === 'history' && (
-        <div className="history-view">
-          <div className="history-header">
-            <h2>📊 Sleep History - {new Date(selectedDate).toLocaleDateString()}</h2>
-          </div>
+        <div className="space-y-6">
+          <div className="card bg-base-100 shadow-xl">
+            <div className="card-body">
+              <h2 className="card-title">📊 Sleep History - {new Date(selectedDate).toLocaleDateString()}</h2>
 
-          {napHistory.length === 0 ? (
-            <div className="no-history">
-              <p>No nap records found for this date.</p>
-              <button 
-                className="create-sample-btn"
-                onClick={() => {
-                  // Could add sample data creation here
-                  console.log('Create sample nap data');
-                }}
-                style={{
-                  marginTop: '1rem',
-                  padding: '0.75rem 1.5rem',
-                  background: '#28a745',
-                  color: 'white',
-                  border: 'none',
-                  borderRadius: '6px',
-                  cursor: 'pointer'
-                }}
-              >
-                📊 View Different Date
-              </button>
-            </div>
-          ) : (
-            <div className="history-content">
-              <div className="daily-summary">
-                <h3>📈 Daily Summary</h3>
-                <div className="summary-stats">
-                  <div className="summary-stat">
-                    <span className="stat-label">Total Naps:</span>
-                    <span className="stat-value">{napHistory.length}</span>
-                  </div>
-                  <div className="summary-stat">
-                    <span className="stat-label">Average Duration:</span>
-                    <span className="stat-value">
-                      {formatDuration(
-                        Math.round(
-                          napHistory.reduce((sum, nap) => sum + (nap.duration || 0), 0) / 
-                          napHistory.length
-                        )
-                      )}
-                    </span>
-                  </div>
-                  <div className="summary-stat">
-                    <span className="stat-label">Quality Sleep:</span>
-                    <span className="stat-value">
-                      {napHistory.filter(nap => 
-                        nap.quality === 'excellent' || nap.quality === 'good'
-                      ).length} / {napHistory.length}
-                    </span>
-                  </div>
+              {napHistory.length === 0 ? (
+                <div className="text-center py-8">
+                  <p className="text-lg mb-4">No nap records found for this date.</p>
+                  <button 
+                    className="btn btn-primary"
+                    onClick={() => {
+                      // Could add sample data creation here
+                      console.log('Create sample nap data');
+                    }}
+                  >
+                    📊 View Different Date
+                  </button>
                 </div>
-              </div>
-
-              <div className="nap-records">
-                <h3>📋 Individual Records</h3>
-                <div className="records-grid">
-                  {napHistory.map(nap => (
-                    <div key={nap.id} className="nap-record-card">
-                      <div className="record-header">
-                        <h4>{nap.childName}</h4>
-                        <span 
-                          className="quality-badge"
-                          style={{backgroundColor: getQualityColor(nap.quality)}}
-                        >
-                          {nap.quality}
-                        </span>
-                      </div>
-                      <div className="record-details">
-                        <div className="time-info">
-                          <span className="nap-time">
-                            {nap.startTime} - {nap.endTime}
-                          </span>
-                          <span className="duration">
-                            ({formatDuration(nap.duration)})
-                          </span>
-                        </div>
-                        {nap.napType && nap.napType !== 'regular' && (
-                          <span className="nap-type">Type: {nap.napType}</span>
-                        )}
-                        {nap.environment && (
-                          <span className="environment">Environment: {nap.environment}</span>
-                        )}
-                        {nap.notes && (
-                          <p className="nap-notes">{nap.notes}</p>
+              ) : (
+                <div className="space-y-6">
+                  <div className="stats shadow">
+                    <div className="stat">
+                      <div className="stat-title">Total Naps</div>
+                      <div className="stat-value">{napHistory.length}</div>
+                    </div>
+                    <div className="stat">
+                      <div className="stat-title">Average Duration</div>
+                      <div className="stat-value">
+                        {formatDuration(
+                          Math.round(
+                            napHistory.reduce((sum, nap) => sum + (nap.duration || 0), 0) / 
+                            napHistory.length
+                          )
                         )}
                       </div>
                     </div>
-                  ))}
-                </div>
-              </div>
-            </div>
-          )}
+                    <div className="stat">
+                      <div className="stat-title">Quality Sleep</div>
+                      <div className="stat-value">
+                        {napHistory.filter(nap => 
+                          nap.quality === 'excellent' || nap.quality === 'good'
+                        ).length} / {napHistory.length}
+                      </div>
+                    </div>
+                  </div>
 
-          <div className="export-actions">
-            <button className="export-btn">📄 Generate Sleep Report</button>
-            <button className="export-btn">📧 Email to Parents</button>
-            <button className="export-btn">📊 Weekly Analysis</button>
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {napHistory.map(nap => (
+                      <div key={nap.id} className="card bg-base-100 shadow-xl">
+                        <div className="card-body">
+                          <div className="flex justify-between items-center">
+                            <h4 className="card-title">{nap.childName}</h4>
+                            <span 
+                              className={`badge badge-${nap.quality === 'excellent' ? 'success' : 
+                                nap.quality === 'good' ? 'info' : 
+                                nap.quality === 'fair' ? 'warning' : 'error'}`}
+                            >
+                              {nap.quality}
+                            </span>
+                          </div>
+                          <div className="space-y-2">
+                            <div className="flex justify-between items-center">
+                              <span className="text-sm opacity-70">
+                                {nap.startTime} - {nap.endTime}
+                              </span>
+                              <span className="badge badge-ghost">
+                                {formatDuration(nap.duration)}
+                              </span>
+                            </div>
+                            {nap.napType && nap.napType !== 'regular' && (
+                              <span className="badge badge-outline">{nap.napType}</span>
+                            )}
+                            {nap.environment && (
+                              <span className="badge badge-ghost">{nap.environment}</span>
+                            )}
+                            {nap.notes && (
+                              <p className="text-sm italic">{nap.notes}</p>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+
+          <div className="flex justify-center gap-4">
+            <button className="btn btn-outline">📄 Generate Sleep Report</button>
+            <button className="btn btn-outline">📧 Email to Parents</button>
+            <button className="btn btn-outline">📊 Weekly Analysis</button>
           </div>
         </div>
       )}

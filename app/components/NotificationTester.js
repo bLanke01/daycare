@@ -230,248 +230,245 @@ export default function NotificationTester({ userRole }) {
 
   if (userRole !== 'admin') {
     return (
-      <div className="notification-tester">
-        <div className="access-denied">
-          <h2>🔒 Access Denied</h2>
-          <p>Only administrators can access the notification testing tools.</p>
+      <div className="card bg-base-100 shadow-xl p-6">
+        <div className="text-center">
+          <h2 className="text-2xl font-bold mb-4">🔒 Access Denied</h2>
+          <p className="text-error">Only administrators can access the notification testing tools.</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="notification-tester">
-      <div className="tester-header">
-        <h2>🧪 Notification Testing Tool</h2>
-        <p className="tester-description">
-          Test email notifications to ensure they're working correctly and preview how they'll look to recipients.
-        </p>
-      </div>
+    <div className="min-h-screen bg-base-200 p-6">
+      <div className="max-w-2xl mx-auto space-y-6">
+        <h1 className="text-4xl font-bold text-base-content">
+          <span className="text-primary">Notification</span> Tester
+        </h1>
 
-      {/* Warning Notice */}
-      <div className="testing-warning">
-        <h3>⚠️ Testing Guidelines</h3>
-        <ul>
-          <li>Use your own email address or test email accounts only</li>
-          <li>These are real emails that will be sent to the specified address</li>
-          <li>Test emails are clearly marked as test notifications</li>
-          <li>Limit testing to avoid spam and unnecessary emails</li>
-        </ul>
-      </div>
+        <div className="card bg-base-100 shadow-xl">
+          <div className="card-body">
+            <h2 className="card-title text-xl mb-4">Send Test Notification</h2>
 
-      {/* Test Configuration */}
-      <div className="test-config">
-        <h3>🎯 Test Configuration</h3>
-        
-        <div className="config-row">
-          <div className="config-group">
-            <label>Notification Type:</label>
-            <select 
-              value={testType} 
-              onChange={(e) => setTestType(e.target.value)}
-            >
-              {Object.entries(testTypes).map(([key, type]) => (
-                <option key={key} value={key}>
-                  {type.label}
-                </option>
-              ))}
-            </select>
-            <p className="config-description">
-              {testTypes[testType]?.description}
-            </p>
-          </div>
-
-          <div className="config-group">
-            <label>Test Email Address:</label>
-            <input
-              type="email"
-              value={testEmail}
-              onChange={(e) => setTestEmail(e.target.value)}
-              placeholder="Enter email to receive test notification"
-              required
-            />
-          </div>
-        </div>
-
-        {/* Custom Data Fields */}
-        <div className="custom-data">
-          <h4>📝 Test Data</h4>
-          <p>Customize the data used in the test notification:</p>
-          
-          {(testType === 'admin_event' || testType === 'parent_event') && (
-            <div className="data-fields">
-              <div className="field-row">
-                <label>Event Title:</label>
-                <input
-                  type="text"
-                  value={customData.eventTitle}
-                  onChange={(e) => handleCustomDataChange('eventTitle', e.target.value)}
-                />
-              </div>
-              <div className="field-row">
-                <label>Event Date:</label>
-                <input
-                  type="date"
-                  value={customData.eventDate}
-                  onChange={(e) => handleCustomDataChange('eventDate', e.target.value)}
-                />
-              </div>
-              <div className="field-row">
-                <label>Event Time:</label>
-                <input
-                  type="text"
-                  value={customData.eventTime}
-                  onChange={(e) => handleCustomDataChange('eventTime', e.target.value)}
-                />
-              </div>
-              <div className="field-row">
-                <label>Group:</label>
+            <form onSubmit={sendTestNotification} className="space-y-4">
+              <div className="form-control">
+                <label className="label">
+                  <span className="label-text">Notification Type</span>
+                </label>
                 <select
-                  value={customData.eventGroup}
-                  onChange={(e) => handleCustomDataChange('eventGroup', e.target.value)}
+                  className="select select-bordered"
+                  value={testType}
+                  onChange={(e) => setTestType(e.target.value)}
+                  required
                 >
-                  <option value="All Groups">All Groups</option>
-                  <option value="Infant">Infant</option>
-                  <option value="Toddler">Toddler</option>
-                  <option value="Pre-K">Pre-K</option>
+                  {Object.entries(testTypes).map(([key, value]) => (
+                    <option key={key} value={key}>
+                      {value.label}
+                    </option>
+                  ))}
                 </select>
               </div>
-              <div className="field-row">
-                <label>Description:</label>
-                <textarea
-                  value={customData.eventDescription}
-                  onChange={(e) => handleCustomDataChange('eventDescription', e.target.value)}
-                  rows="3"
-                />
-              </div>
-            </div>
-          )}
 
-          {(testType === 'new_invoice' || testType === 'invoice_paid') && (
-            <div className="data-fields">
-              <div className="field-row">
-                <label>Invoice Number:</label>
+              <div className="form-control">
+                <label className="label">
+                  <span className="label-text">Test Email Address</span>
+                </label>
                 <input
-                  type="text"
-                  value={customData.invoiceNumber}
-                  onChange={(e) => handleCustomDataChange('invoiceNumber', e.target.value)}
+                  type="email"
+                  placeholder="Enter test recipient email"
+                  className="input input-bordered"
+                  value={testEmail}
+                  onChange={(e) => setTestEmail(e.target.value)}
+                  required
                 />
               </div>
-              <div className="field-row">
-                <label>Child Name:</label>
-                <input
-                  type="text"
-                  value={customData.childName}
-                  onChange={(e) => handleCustomDataChange('childName', e.target.value)}
-                />
-              </div>
-              <div className="field-row">
-                <label>Amount:</label>
-                <input
-                  type="number"
-                  step="0.01"
-                  value={customData.totalAmount}
-                  onChange={(e) => handleCustomDataChange('totalAmount', e.target.value)}
-                />
-              </div>
-              {testType === 'new_invoice' && (
-                <div className="field-row">
-                  <label>Due Date:</label>
+
+              <div className="divider">Custom Data</div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                <div className="form-control">
+                  <label className="label">
+                    <span className="label-text">Event Title</span>
+                  </label>
+                  <input
+                    type="text"
+                    className="input input-bordered"
+                    value={customData.eventTitle}
+                    onChange={(e) => handleCustomDataChange('eventTitle', e.target.value)}
+                  />
+                </div>
+
+                <div className="form-control">
+                  <label className="label">
+                    <span className="label-text">Event Date</span>
+                  </label>
                   <input
                     type="date"
+                    className="input input-bordered"
+                    value={customData.eventDate}
+                    onChange={(e) => handleCustomDataChange('eventDate', e.target.value)}
+                  />
+                </div>
+
+                <div className="form-control">
+                  <label className="label">
+                    <span className="label-text">Event Time</span>
+                  </label>
+                  <input
+                    type="text"
+                    className="input input-bordered"
+                    value={customData.eventTime}
+                    onChange={(e) => handleCustomDataChange('eventTime', e.target.value)}
+                  />
+                </div>
+
+                <div className="form-control">
+                  <label className="label">
+                    <span className="label-text">Event Group</span>
+                  </label>
+                  <input
+                    type="text"
+                    className="input input-bordered"
+                    value={customData.eventGroup}
+                    onChange={(e) => handleCustomDataChange('eventGroup', e.target.value)}
+                  />
+                </div>
+
+                <div className="form-control col-span-2">
+                  <label className="label">
+                    <span className="label-text">Event Description</span>
+                  </label>
+                  <textarea
+                    className="textarea textarea-bordered h-24"
+                    value={customData.eventDescription}
+                    onChange={(e) => handleCustomDataChange('eventDescription', e.target.value)}
+                  />
+                </div>
+
+                <div className="form-control">
+                  <label className="label">
+                    <span className="label-text">Invoice Number</span>
+                  </label>
+                  <input
+                    type="text"
+                    className="input input-bordered"
+                    value={customData.invoiceNumber}
+                    onChange={(e) => handleCustomDataChange('invoiceNumber', e.target.value)}
+                  />
+                </div>
+
+                <div className="form-control">
+                  <label className="label">
+                    <span className="label-text">Child Name</span>
+                  </label>
+                  <input
+                    type="text"
+                    className="input input-bordered"
+                    value={customData.childName}
+                    onChange={(e) => handleCustomDataChange('childName', e.target.value)}
+                  />
+                </div>
+
+                <div className="form-control">
+                  <label className="label">
+                    <span className="label-text">Total Amount</span>
+                  </label>
+                  <input
+                    type="text"
+                    className="input input-bordered"
+                    value={customData.totalAmount}
+                    onChange={(e) => handleCustomDataChange('totalAmount', e.target.value)}
+                  />
+                </div>
+
+                <div className="form-control">
+                  <label className="label">
+                    <span className="label-text">Due Date</span>
+                  </label>
+                  <input
+                    type="date"
+                    className="input input-bordered"
                     value={customData.dueDate}
                     onChange={(e) => handleCustomDataChange('dueDate', e.target.value)}
                   />
                 </div>
-              )}
-            </div>
-          )}
-
-          {testType === 'parent_event' && (
-            <div className="data-fields">
-              <div className="field-row">
-                <label>Child Name:</label>
-                <input
-                  type="text"
-                  value={customData.childName}
-                  onChange={(e) => handleCustomDataChange('childName', e.target.value)}
-                />
               </div>
-            </div>
-          )}
-        </div>
 
-        {/* Send Test Button */}
-        <div className="test-actions">
-          <button 
-            className="send-test-btn"
-            onClick={sendTestNotification}
-            disabled={testing || !testEmail}
-          >
-            {testing ? (
-              <>
-                <div className="btn-spinner"></div>
-                Sending Test...
-              </>
-            ) : (
-              '📧 Send Test Notification'
-            )}
-          </button>
-        </div>
-      </div>
-
-      {/* Test Results */}
-      {results.length > 0 && (
-        <div className="test-results">
-          <h3>📊 Test Results</h3>
-          <div className="results-list">
-            {results.map(result => (
-              <div 
-                key={result.id} 
-                className={`result-item ${result.success ? 'success' : 'error'}`}
-              >
-                <div className="result-header">
-                  <span className="result-type">
-                    {testTypes[result.type]?.label}
-                  </span>
-                  <span className="result-time">
-                    {new Date(result.timestamp).toLocaleTimeString()}
-                  </span>
-                </div>
-                <div className="result-details">
-                  <span className="result-email">To: {result.email}</span>
-                  <span className="result-duration">{result.duration}ms</span>
-                  <span className={`result-status ${result.success ? 'success' : 'error'}`}>
-                    {result.success ? '✅ Success' : `❌ Failed: ${result.error}`}
-                  </span>
-                </div>
+              <div className="flex justify-end gap-2">
+                <button
+                  type="reset"
+                  className="btn btn-ghost"
+                >
+                  Reset
+                </button>
+                <button
+                  type="submit"
+                  className={`btn btn-primary ${testing ? 'loading' : ''}`}
+                  disabled={testing || !testEmail}
+                >
+                  {testing ? 'Sending...' : 'Send Test Notification'}
+                </button>
               </div>
-            ))}
+            </form>
           </div>
         </div>
-      )}
 
-      {/* Testing Tips */}
-      <div className="testing-tips">
-        <h3>💡 Testing Tips</h3>
-        <div className="tips-grid">
-          <div className="tip-card">
-            <h4>📧 Email Delivery</h4>
-            <p>Test emails should arrive within 1-2 minutes. Check spam folders if not received.</p>
-          </div>
-          <div className="tip-card">
-            <h4>📱 Mobile Testing</h4>
-            <p>View test emails on mobile devices to ensure responsive design works correctly.</p>
-          </div>
-          <div className="tip-card">
-            <h4>🎨 Content Review</h4>
-            <p>Review email content for accuracy, tone, and professional appearance.</p>
-          </div>
-          <div className="tip-card">
-            <h4>🔗 Link Testing</h4>
-            <p>Click all links in test emails to ensure they redirect to the correct pages.</p>
+        <div className="card bg-base-100 shadow-xl">
+          <div className="card-body">
+            <h2 className="card-title text-xl mb-4">Important Notes</h2>
+            <div className="space-y-2">
+              <p className="text-base-content/70">
+                • This is a testing tool for administrators to verify notification delivery.
+              </p>
+              <p className="text-base-content/70">
+                • Email notifications will be sent from the configured email service.
+              </p>
+              <p className="text-base-content/70">
+                • SMS notifications require a valid phone number with country code.
+              </p>
+              <p className="text-base-content/70">
+                • Push notifications require a valid user ID with an active session.
+              </p>
+              <p className="text-base-content/70">
+                • All test notifications are logged but marked as test messages.
+              </p>
+            </div>
           </div>
         </div>
+
+        {results.length > 0 && (
+          <div className="mt-8">
+            <div className="divider">Test Results</div>
+            <div className="overflow-x-auto">
+              <table className="table table-zebra w-full">
+                <thead>
+                  <tr>
+                    <th>Time</th>
+                    <th>Type</th>
+                    <th>Email</th>
+                    <th>Status</th>
+                    <th>Duration</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {results.map(result => (
+                    <tr key={result.id}>
+                      <td>{new Date(result.timestamp).toLocaleTimeString()}</td>
+                      <td>{testTypes[result.type]?.label || result.type}</td>
+                      <td>{result.email}</td>
+                      <td>
+                        <span className={`badge ${result.success ? 'badge-success' : 'badge-error'}`}>
+                          {result.success ? '✓ Success' : '✗ Failed'}
+                        </span>
+                      </td>
+                      <td>{result.duration}ms</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
